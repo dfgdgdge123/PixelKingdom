@@ -1,5 +1,4 @@
 import pygame
-import gif_pygame
 import sys
 
 pygame.init()
@@ -15,7 +14,7 @@ ASSETS = {
 }
 
 # герой
-gif_sprite = gif_pygame.load("hero_assets/knight.gif")
+gif_sprite = pygame.image.load("hero_assets/hero.png")
 
 
 def load_map(filename):
@@ -40,6 +39,12 @@ def main():
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("Pixel Kingdom")
 
+    heroes = pygame.sprite.Group()
+    hero = pygame.sprite.Sprite(heroes)
+    hero.image = gif_sprite
+    hero.rect = hero.image.get_rect()
+    hero.rect.center = (screen_width // 2, screen_height // 2)
+
     clock = pygame.time.Clock()
 
     while True:
@@ -48,10 +53,21 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+        # ходьба
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            hero.rect.x -= 3
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            hero.rect.x += 3
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            hero.rect.y += 3
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            hero.rect.y -= 3
+
         screen.fill((124, 172, 46))
         draw_map(map_data, screen)
 
-        gif_sprite.render(screen, gif_sprite.get_rect(center=(screen_width // 2, screen_height // 2)))
+        heroes.draw(screen)
         screen.blit(castle, (screen_width // 1.19, screen_height // 2.5))
 
         clock.tick(60)
