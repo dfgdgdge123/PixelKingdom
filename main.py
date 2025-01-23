@@ -11,6 +11,7 @@ ASSETS = {
     "F": pygame.image.load("map_assets/fild.jpg"),
     "C": pygame.image.load("map_assets/castle_floor.jpg"),
     "S": pygame.image.load("map_assets/castle_walls.jpg"),
+    "T": pygame.image.load("map_assets/grass_with_tree.jpg")
 }
 
 # герой
