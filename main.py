@@ -1,170 +1,145 @@
 import pygame
 import sys
-
+from intro_end import IntroScreen, GameOverScreen
 pygame.init()
 
 CELL_SIZE = 50
 
-# Загрузка спрайтов
-imgSprites_Run_D = pygame.image.load("hero_assets/_Run.png")
-imgSprites_Run_A = pygame.image.load("hero_assets/inv_Run.png")
-imgSprites_Run_WS = pygame.image.load("hero_assets/_CrouchAll.png")
-stand_sprite = pygame.image.load("hero_assets/hero.png")
 
-# Анимация бега (вырезаем кадры)
-animRun_D = [imgSprites_Run_D.subsurface(42, 42, 28, 38),
-             imgSprites_Run_D.subsurface(163, 42, 28, 38),
-             imgSprites_Run_D.subsurface(287, 42, 28, 38),
-             imgSprites_Run_D.subsurface(405, 42, 28, 38),
-             imgSprites_Run_D.subsurface(523, 42, 28, 38),
-             imgSprites_Run_D.subsurface(641, 42, 28, 38),
-             imgSprites_Run_D.subsurface(763, 42, 28, 38),
-             imgSprites_Run_D.subsurface(885, 42, 28, 38),
-             imgSprites_Run_D.subsurface(1006, 42, 28, 38),
-             imgSprites_Run_D.subsurface(1123, 42, 28, 38)]
+class MapLoader:
+    def __init__(self, filename):
+        self.map_data = self.load_map(filename)
+        self.assets = {
+            "L": pygame.image.load("map_assets/land.jpg"),
+            "G": pygame.image.load("map_assets/grass.jpg"),
+            "F": pygame.image.load("map_assets/fild.jpg"),
+            "C": pygame.image.load("map_assets/castle_floor.jpg"),
+            "S": pygame.image.load("map_assets/castle_walls.jpg"),
+            "1": pygame.image.load("map_assets/three1.jpg"),
+            "2": pygame.image.load("map_assets/three2.jpg"),
+            "3": pygame.image.load("map_assets/three3.jpg"),
+            "4": pygame.image.load("map_assets/three3.jpg"),
+            "5": pygame.image.load("map_assets/flowers.jpg"),
+        }
 
-animRun_A = [imgSprites_Run_A.subsurface(1123, 42, 28, 38),
-             imgSprites_Run_A.subsurface(1006, 42, 28, 38),
-             imgSprites_Run_A.subsurface(885, 42, 28, 38),
-             imgSprites_Run_A.subsurface(763, 42, 28, 38),
-             imgSprites_Run_A.subsurface(641, 42, 28, 38),
-             imgSprites_Run_A.subsurface(523, 42, 28, 38),
-             imgSprites_Run_A.subsurface(405, 42, 28, 38),
-             imgSprites_Run_A.subsurface(287, 42, 28, 38),
-             imgSprites_Run_A.subsurface(163, 42, 28, 38),
-             imgSprites_Run_A.subsurface(42, 42, 28, 38)]
+    def load_map(self, filename):
+        with open(filename, "r") as file:
+            return [line.strip() for line in file]
 
-animRun_WS = [imgSprites_Run_WS.subsurface(42, 46, 31, 33),
-              imgSprites_Run_WS.subsurface(162, 46, 31, 33),
-              imgSprites_Run_WS.subsurface(281, 46, 31, 33)]
+    def draw_map(self, screen):
+        for y, row in enumerate(self.map_data):
+            for x, cell in enumerate(row):
+                if cell in self.assets:
+                    screen.blit(self.assets[cell], (x * CELL_SIZE, y * CELL_SIZE))
 
-# Загрузка ассетов карты
-ASSETS = {
-    "L": pygame.image.load("map_assets/land.jpg"),
-    "G": pygame.image.load("map_assets/grass.jpg"),
-    "F": pygame.image.load("map_assets/fild.jpg"),
-    "C": pygame.image.load("map_assets/castle_floor.jpg"),
-    "S": pygame.image.load("map_assets/castle_walls.jpg"),
-    "1": pygame.image.load("map_assets/three1.jpg"),
-    "2": pygame.image.load("map_assets/three2.jpg"),
-    "3": pygame.image.load("map_assets/three3.jpg"),
-    "4": pygame.image.load("map_assets/three3.jpg"),
-    "5": pygame.image.load("map_assets/flowers.jpg")
-}
+    def can_move(self, x, y, hero_width, hero_height):
+        rows, cols = len(self.map_data), len(self.map_data[0])
+        corners = [
+            (x // CELL_SIZE, y // CELL_SIZE),
+            ((x + hero_width) // CELL_SIZE, y // CELL_SIZE),
+            (x // CELL_SIZE, (y + hero_height) // CELL_SIZE),
+            ((x + hero_width) // CELL_SIZE, (y + hero_height) // CELL_SIZE),
+        ]
+        return all(0 <= cy < rows and 0 <= cx < cols and self.map_data[cy][cx] == "L" for cx, cy in corners)
 
 
-def load_map(filename):
-    with open(filename, "r") as file:
-        return [line.strip() for line in file]
+class Hero:
+    def __init__(self):
+        self.stand_sprite = pygame.image.load("hero_assets/hero.png")
+        self.image = self.stand_sprite
+        self.rect = self.image.get_rect()
+        self.frame = 0
+        self.load_animations()
 
+    def load_animations(self):
+        img_run_d = pygame.image.load("hero_assets/_Run.png")
+        img_run_a = pygame.image.load("hero_assets/inv_Run.png")
+        img_run_ws = pygame.image.load("hero_assets/_CrouchAll.png")
 
-def draw_map(map_data, screen):
-    for y, row in enumerate(map_data):
-        for x, cell in enumerate(row):
-            if cell in ASSETS:
-                screen.blit(ASSETS[cell], (x * CELL_SIZE, y * CELL_SIZE))
+        self.anim_run_d = [img_run_d.subsurface(x, 42, 28, 38) for x in range(42, 1124, 121)]
+        self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(42, 1124, 121))]
+        self.anim_run_ws = [img_run_ws.subsurface(x, 46, 31, 33) for x in range(42, 282, 120)]
 
-
-def can_move(map_data, x, y, hero_width, hero_height):
-    # Проверяет, можно ли двигаться в клетку (x, y), проверяя все углы героя
-    rows = len(map_data)
-    cols = len(map_data[0])
-
-    corners = [
-        (x // CELL_SIZE, y // CELL_SIZE),
-        ((x + hero_width) // CELL_SIZE, y // CELL_SIZE),
-        (x // CELL_SIZE, (y + hero_height) // CELL_SIZE),
-        ((x + hero_width) // CELL_SIZE, (y + hero_height) // CELL_SIZE),
-    ]
-
-    # Проверяем, все ли углы находятся в клетках "L"
-    for cell_x, cell_y in corners:
-        if not (0 <= cell_y < rows and 0 <= cell_x < cols) or map_data[cell_y][cell_x] != "L":
-            return False
-
-    return True
-
-
-def main():
-    frame = 0
-    map_data = load_map("map.txt")
-    screen_width = len(map_data[0]) * CELL_SIZE
-    screen_height = len(map_data) * CELL_SIZE
-
-    castle = pygame.image.load('map_assets/castle.png')
-
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Pixel Kingdom")
-
-    # Создаём героя
-    hero = pygame.sprite.Sprite()
-    hero.image = stand_sprite
-    hero.rect = hero.image.get_rect()
-
-    for y, row in enumerate(map_data):
-        for x, cell in enumerate(row):
-            if cell == "L":
-                hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
-                break
-        else:
-            continue
-        break
-
-    clock = pygame.time.Clock()
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        # Движение героя
-        keys = pygame.key.get_pressed()
-        is_running_D = is_running_A = is_running_W = is_running_S = False
-
-        new_x, new_y = hero.rect.x, hero.rect.y
+    def move(self, map_loader, keys):
+        new_x, new_y = self.rect.x, self.rect.y
+        is_running_d = is_running_a = is_running_w = is_running_s = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             new_x -= 3
-            is_running_A = True
+            is_running_a = True
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             new_x += 3
-            is_running_D = True
+            is_running_d = True
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             new_y += 3
-            is_running_S = True
+            is_running_s = True
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             new_y -= 3
-            is_running_W = True
+            is_running_w = True
 
-        # Проверяем, можно ли двигаться
-        if can_move(map_data, new_x, hero.rect.y, hero.rect.width, hero.rect.height):
-            hero.rect.x = new_x
-        if can_move(map_data, hero.rect.x, new_y, hero.rect.width, hero.rect.height):
-            hero.rect.y = new_y
+        if map_loader.can_move(new_x, self.rect.y, self.rect.width, self.rect.height):
+            self.rect.x = new_x
+        if map_loader.can_move(self.rect.x, new_y, self.rect.width, self.rect.height):
+            self.rect.y = new_y
 
-        """Анимация бега"""
-        if is_running_D:
-            frame = (frame + 0.1) % len(animRun_D)
-            hero.image = animRun_D[int(frame)]
-        elif is_running_A:
-            frame = (frame + 0.1) % len(animRun_A)
-            hero.image = animRun_A[int(frame)]
-        elif is_running_S or is_running_W:
-            frame = (frame + 0.1) % len(animRun_WS)
-            hero.image = animRun_WS[int(frame)]
+        self.animate(is_running_d, is_running_a, is_running_w or is_running_s)
+
+    def animate(self, run_d, run_a, run_ws):
+        if run_d:
+            self.frame = (self.frame + 0.1) % len(self.anim_run_d)
+            self.image = self.anim_run_d[int(self.frame)]
+        elif run_a:
+            self.frame = (self.frame + 0.1) % len(self.anim_run_a)
+            self.image = self.anim_run_a[int(self.frame)]
+        elif run_ws:
+            self.frame = (self.frame + 0.1) % len(self.anim_run_ws)
+            self.image = self.anim_run_ws[int(self.frame)]
         else:
-            hero.image = stand_sprite
+            self.image = self.stand_sprite
 
-        # Отрисовка экрана
-        screen.fill((124, 172, 46))
-        draw_map(map_data, screen)
-        screen.blit(castle, (screen_width // 1.19, screen_height // 2.5))
-        screen.blit(hero.image, hero.rect)
 
-        clock.tick(60)
-        pygame.display.flip()
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.map_loader = MapLoader("map.txt")
+        self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
+        self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
+        print(self.screen_width, self.screen_height)
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        pygame.display.set_caption("Pixel Kingdom")
+        self.castle = pygame.image.load('map_assets/castle.png')
+        self.hero = Hero()
+        self.clock = pygame.time.Clock()
+        self.init_hero_position()
+
+    def init_hero_position(self):
+        for y, row in enumerate(self.map_loader.map_data):
+            for x, cell in enumerate(row):
+                if cell == "L":
+                    self.hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
+                    return
+
+    def run(self):
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            keys = pygame.key.get_pressed()
+            self.hero.move(self.map_loader, keys)
+            self.screen.fill((124, 172, 46))
+            self.map_loader.draw_map(self.screen)
+            self.screen.blit(self.castle, (self.screen_width // 1.19, self.screen_height // 2.5))
+            self.screen.blit(self.hero.image, self.hero.rect)
+            self.clock.tick(60)
+            pygame.display.flip()
 
 
 if __name__ == "__main__":
-    main()
+    # game = Game()
+    # game.run()
+    intro = IntroScreen()
+    intro.run()
+    # game_over_screen = GameOverScreen()
+    # game_over_screen.run()
