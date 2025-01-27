@@ -74,53 +74,35 @@ class Hero:
             return  # Во время атаки герой не двигается
 
         new_x, new_y = self.rect.x, self.rect.y
-        is_running_d = is_running_a = is_running_w = is_running_s = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             new_x -= 3
-            is_running_a = True
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             new_x += 3
-            is_running_d = True
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             new_y += 3
-            is_running_s = True
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             new_y -= 3
-            is_running_w = True
 
         if map_loader.can_move(new_x, self.rect.y, self.rect.width, self.rect.height):
             self.rect.x = new_x
         if map_loader.can_move(self.rect.x, new_y, self.rect.width, self.rect.height):
             self.rect.y = new_y
 
-        self.animate(is_running_d, is_running_a, is_running_w or is_running_s)
-
     def attack(self):
         """Запускает анимацию атаки."""
         if not self.is_attacking:
             self.is_attacking = True
-            self.frame = 0  # Начинаем анимацию атаки с первого кадра
+            self.frame = 0
 
-    def animate(self, run_d, run_a, run_ws):
-        """Анимация персонажа."""
+    def animate(self):
+        """Анимация персонажа. Теперь вызывается из игрового цикла."""
         if self.is_attacking:
             if self.frame < len(self.anim_l_attack) - 1:
-                self.frame += 0.2  # Скорость анимации атаки
+                self.frame += 0.2
             else:
-                self.is_attacking = False  # После завершения атаки возвращаемся в обычное состояние
+                self.is_attacking = False
             self.image = self.anim_l_attack[int(self.frame)]
-            return  # Выход из функции, чтобы не переключаться на другие анимации
-
-        if run_d:
-            self.frame = (self.frame + 0.1) % len(self.anim_run_d)
-            self.image = self.anim_run_d[int(self.frame)]
-        elif run_a:
-            self.frame = (self.frame + 0.1) % len(self.anim_run_a)
-            self.image = self.anim_run_a[int(self.frame)]
-        elif run_ws:
-            self.frame = (self.frame + 0.1) % len(self.anim_run_ws)
-            self.image = self.anim_run_ws[int(self.frame)]
         else:
             self.image = self.stand_sprite
 
@@ -152,14 +134,17 @@ class Game:
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.hero.attack()  # Запускаем анимацию атаки при нажатии ЛКМ
+                    self.hero.attack()
 
             keys = pygame.key.get_pressed()
             self.hero.move(self.map_loader, keys)
+            self.hero.animate()
+
             self.screen.fill((124, 172, 46))
             self.map_loader.draw_map(self.screen)
             self.screen.blit(self.castle, (self.screen_width // 1.19, self.screen_height // 2.5))
             self.screen.blit(self.hero.image, self.hero.rect)
+
             self.clock.tick(60)
             pygame.display.flip()
 
