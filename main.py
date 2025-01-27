@@ -1,6 +1,7 @@
 import pygame
 import sys
 from intro_end import IntroScreen, GameOverScreen
+
 pygame.init()
 
 CELL_SIZE = 50
@@ -19,7 +20,7 @@ class MapLoader:
             "2": pygame.image.load("map_assets/three2.jpg"),
             "3": pygame.image.load("map_assets/three3.jpg"),
             "4": pygame.image.load("map_assets/three3.jpg"),
-            "5": pygame.image.load("map_assets/flowers.jpg"),
+            "5": pygame.image.load("map_assets/three5.jpg"),
         }
 
     def load_map(self, filename):
@@ -49,53 +50,77 @@ class Hero:
         self.image = self.stand_sprite
         self.rect = self.image.get_rect()
         self.frame = 0
+        self.is_attacking = False  # Флаг атаки
+        self.moving_direction = None  # Направление движения
         self.load_animations()
 
     def load_animations(self):
         img_run_d = pygame.image.load("hero_assets/_Run.png")
         img_run_a = pygame.image.load("hero_assets/inv_Run.png")
         img_run_ws = pygame.image.load("hero_assets/_CrouchAll.png")
+        img_attack = pygame.image.load("hero_assets/_Attack.png")
 
         self.anim_run_d = [img_run_d.subsurface(x, 42, 28, 38) for x in range(42, 1124, 121)]
         self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(42, 1124, 121))]
         self.anim_run_ws = [img_run_ws.subsurface(x, 46, 31, 33) for x in range(42, 282, 120)]
 
+        self.anim_l_attack = [img_attack.subsurface(36, 43, 40, 37),
+                              img_attack.subsurface(171, 37, 66, 43),
+                              img_attack.subsurface(292, 45, 67, 35),
+                              img_attack.subsurface(414, 43, 58, 36),]
+
     def move(self, map_loader, keys):
+        if self.is_attacking:
+            return  # Во время атаки герой не двигается
+
         new_x, new_y = self.rect.x, self.rect.y
-        is_running_d = is_running_a = is_running_w = is_running_s = False
+        self.moving_direction = None  # Сбрасываем направление
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             new_x -= 3
-            is_running_a = True
+            self.moving_direction = "left"
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             new_x += 3
-            is_running_d = True
+            self.moving_direction = "right"
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             new_y += 3
-            is_running_s = True
+            self.moving_direction = "down"
         if keys[pygame.K_UP] or keys[pygame.K_w]:
             new_y -= 3
-            is_running_w = True
+            self.moving_direction = "up"
 
         if map_loader.can_move(new_x, self.rect.y, self.rect.width, self.rect.height):
             self.rect.x = new_x
         if map_loader.can_move(self.rect.x, new_y, self.rect.width, self.rect.height):
             self.rect.y = new_y
 
-        self.animate(is_running_d, is_running_a, is_running_w or is_running_s)
+    def attack(self):
+        """Запускает анимацию атаки."""
+        if not self.is_attacking:
+            self.is_attacking = True
+            self.frame = 0
 
-    def animate(self, run_d, run_a, run_ws):
-        if run_d:
+    def animate(self):
+        """Анимация персонажа."""
+        if self.is_attacking:
+            if self.frame < len(self.anim_l_attack) - 1:
+                self.frame += 0.2
+            else:
+                self.is_attacking = False
+            self.image = self.anim_l_attack[int(self.frame)]
+            return
+
+        if self.moving_direction == "right":
             self.frame = (self.frame + 0.1) % len(self.anim_run_d)
             self.image = self.anim_run_d[int(self.frame)]
-        elif run_a:
+        elif self.moving_direction == "left":
             self.frame = (self.frame + 0.1) % len(self.anim_run_a)
             self.image = self.anim_run_a[int(self.frame)]
-        elif run_ws:
+        elif self.moving_direction in ["up", "down"]:
             self.frame = (self.frame + 0.1) % len(self.anim_run_ws)
             self.image = self.anim_run_ws[int(self.frame)]
         else:
-            self.image = self.stand_sprite
+            self.image = self.stand_sprite  # Если не двигается — стоит на месте
 
 
 class Game:
@@ -104,7 +129,6 @@ class Game:
         self.map_loader = MapLoader("map.txt")
         self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
-        print(self.screen_width, self.screen_height)
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Pixel Kingdom")
         self.castle = pygame.image.load('map_assets/castle.png')
@@ -125,21 +149,23 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.hero.attack()
 
             keys = pygame.key.get_pressed()
             self.hero.move(self.map_loader, keys)
+            self.hero.animate()
+
             self.screen.fill((124, 172, 46))
             self.map_loader.draw_map(self.screen)
             self.screen.blit(self.castle, (self.screen_width // 1.19, self.screen_height // 2.5))
+
             self.screen.blit(self.hero.image, self.hero.rect)
-            self.clock.tick(60)
+
             pygame.display.flip()
+            self.clock.tick(60)
 
 
 if __name__ == "__main__":
-    # game = Game()
-    # game.run()
-    intro = IntroScreen()
-    intro.run()
-    # game_over_screen = GameOverScreen()
-    # game_over_screen.run()
+    game = Game()
+    game.run()
