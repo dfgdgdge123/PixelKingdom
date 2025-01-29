@@ -1,5 +1,6 @@
 import pygame
 
+
 class Hero:
     def __init__(self):
         self.stand_sprite = pygame.image.load("hero_assets/hero.png")
@@ -86,7 +87,6 @@ class Hero:
                 self.is_l_attacking = False
             self.image = self.anim_l_attack[int(self.frame)]
             return
-
 
         if self.moving_direction == "right":
             self.frame = (self.frame + 0.1) % len(self.anim_run_d)
