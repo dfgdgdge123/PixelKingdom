@@ -141,7 +141,7 @@ class Game:
                     if self.mushroom_hit_count[monster] == 1:
                         monster.take_hit()  # Запускаем анимацию получения уронаa
                     elif self.mushroom_hit_count[monster] >= self.hits_to_kill_mushroom:
-                        monster.die()  # Запускаем анимацию смерти
+                        monster.die()  # Запускаем анимацию смертивыф
 
     def check_monster_collision(self):
         current_time = pygame.time.get_ticks()
