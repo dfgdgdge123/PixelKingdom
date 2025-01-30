@@ -122,7 +122,7 @@ class Game:
             if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
                 if current_time - self.last_hit_time > self.hit_cooldown:
                     monster.attack()
-                    self.lives -= 0.5  # Монстры теперь могут наносить 0.5 или 1 урона
+                    self.lives -= 0.5
                     self.last_hit_time = current_time
 
                     if self.lives <= 0:
@@ -161,14 +161,14 @@ class Game:
             pygame.quit()
             sys.exit()
         else:
-            self.__init__()  # Перезапуск игры
+            self.__init__()
 
     def spawn_monster(self):
         """Спавнит 2-3 монстра сразу, с одинаковым X, но разным Y"""
-        num_monsters = random.randint(2, 5)  # Спавним 2-3 монстра одновременно
-        spawn_x = 170  # Все монстры появляются на одной линии X
+        num_monsters = random.randint(2, 5)
+        spawn_x = 170
 
-        used_y_positions = []  # Список для хранения использованных y-координат
+        used_y_positions = []
 
         for _ in range(num_monsters):
             monster_type = random.choices(
@@ -182,17 +182,16 @@ class Game:
             available_y_positions = [y for y in available_y_positions if y not in used_y_positions]
 
             if not available_y_positions:
-                break  # Если все y-координаты заняты, прекращаем спавн
+                break
 
-            spawn_y = random.choice(available_y_positions)  # Рандомный Y-координат из оставшихся
+            spawn_y = random.choice(available_y_positions)
 
-            # Добавляем координату в список использованных
             used_y_positions.append(spawn_y)
 
             new_monster = monster_type(self.screen_width, self.screen_height, self.map_loader,
                                        speed=random.uniform(1.0, 2.5))
-            new_monster.rect.x = spawn_x  # Устанавливаем X одинаковым
-            new_monster.rect.y = spawn_y  # Устанавливаем Y случайным
+            new_monster.rect.x = spawn_x
+            new_monster.rect.y = spawn_y
             self.monsters.append(new_monster)
 
     def run(self):
