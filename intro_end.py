@@ -133,16 +133,16 @@ class GameOverScreen:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    return
+                    return "NO"
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     for button in self.buttons:
                         if button["rect"].collidepoint(event.pos):
                             if button["text"] == "YES":
                                 print("Начинаем игру заново!")
+                                return "YES"
                             elif button["text"] == "NO":
                                 print("Игра завершена.")
-                            running = False
-                            break
+                                return "NO"
             pygame.time.delay(100)
         pygame.quit()
 

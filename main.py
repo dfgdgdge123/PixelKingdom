@@ -78,6 +78,12 @@ class Game:
             Goblin(self.screen_width, self.screen_height, self.map_loader, speed=2),
             Mushroom(self.screen_width, self.screen_height, self.map_loader, speed=1.3),
         ]
+        self.monster_hits = {
+            Sceleton: {"hits_to_kill": 2, "hit_count": {}},
+            Eye: {"hits_to_kill": 2, "hit_count": {}},
+            Goblin: {"hits_to_kill": 2, "hit_count": {}},
+            Mushroom: {"hits_to_kill": 2, "hit_count": {}},
+        }
 
         self.hits_to_kill_sceleton = 2  # Количество ударов для убийства скелета
         self.sceleton_hit_count = {}  # Счетчик ударов по каждому скелету
@@ -102,93 +108,42 @@ class Game:
 
     def check_attack_collision(self):
         for monster in self.monsters:
-            if isinstance(monster, Sceleton) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if monster not in self.sceleton_hit_count:
-                        self.sceleton_hit_count[monster] = 0
-                    self.sceleton_hit_count[monster] += 1
+            monster_type = type(monster)
+            if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
+                if monster not in self.monster_hits[monster_type]["hit_count"]:
+                    self.monster_hits[monster_type]["hit_count"][monster] = 0
+                self.monster_hits[monster_type]["hit_count"][monster] += 1
 
-                    if self.sceleton_hit_count[monster] == 1:
-                        monster.take_hit()  # Запускаем анимацию получения урона
-                    elif self.sceleton_hit_count[monster] >= self.hits_to_kill_sceleton:
-                        monster.die()  # Запускаем анимацию смерти
-            if isinstance(monster, Eye) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if monster not in self.eye_hit_count:
-                        self.eye_hit_count[monster] = 0
-                    self.eye_hit_count[monster] += 1
-
-                    if self.eye_hit_count[monster] == 1:
-                        monster.take_hit()  # Запускаем анимацию получения уронаa
-                    elif self.eye_hit_count[monster] >= self.hits_to_kill_eye:
-                        monster.die()  # Запускаем анимацию смерти
-            if isinstance(monster, Goblin) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if monster not in self.goblin_hit_count:
-                        self.goblin_hit_count[monster] = 0
-                    self.goblin_hit_count[monster] += 1
-
-                    if self.goblin_hit_count[monster] == 1:
-                        monster.take_hit()  # Запускаем анимацию получения уронаa
-                    elif self.goblin_hit_count[monster] >= self.hits_to_kill_goblin:
-                        monster.die()  # Запускаем анимацию смерти
-            if isinstance(monster, Mushroom) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if monster not in self.mushroom_hit_count:
-                        self.mushroom_hit_count[monster] = 0
-                    self.mushroom_hit_count[monster] += 1
-
-                    if self.mushroom_hit_count[monster] == 1:
-                        monster.take_hit()  # Запускаем анимацию получения уронаa
-                    elif self.mushroom_hit_count[monster] >= self.hits_to_kill_mushroom:
-                        monster.die()  # Запускаем анимацию смертивыф
+                if self.monster_hits[monster_type]["hit_count"][monster] == 1:
+                    monster.take_hit()
+                elif (self.monster_hits[monster_type]["hit_count"][monster] >=
+                      self.monster_hits[monster_type]["hits_to_kill"]):
+                    monster.die()
 
     def check_monster_collision(self):
         current_time = pygame.time.get_ticks()
         for monster in self.monsters:
-            if isinstance(monster, Sceleton) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if current_time - self.last_hit_time > self.hit_cooldown:
-                        monster.attack()  # Запускаем анимацию атаки скелета
-                        self.lives -= 1  # Уменьшаем жизни героя
-                        self.last_hit_time = current_time  # Обновляем время последнего удара
-            if isinstance(monster, Eye) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if current_time - self.last_hit_time > self.hit_cooldown:
-                        monster.attack()  # Запускаем анимацию атаки скелета
-                        self.lives -= 1  # Уменьшаем жизни героя
-                        self.last_hit_time = current_time  # Обновляем время последнего удара
-            if isinstance(monster, Goblin) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if current_time - self.last_hit_time > self.hit_cooldown:
-                        monster.attack()  # Запускаем анимацию атаки скелета
-                        self.lives -= 1  # Уменьшаем жизни героя
-                        self.last_hit_time = current_time  # Обновляем время последнего удара
-            if isinstance(monster, Mushroom) and not monster.is_dead:
-                if self.hero.rect.colliderect(monster.rect):
-                    if current_time - self.last_hit_time > self.hit_cooldown:
-                        monster.attack()  # Запускаем анимацию атаки скелета
-                        self.lives -= 1  # Уменьшаем жизни героя
-                        self.last_hit_time = current_time  # Обновляем время последнего удара
-
+            if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
+                if current_time - self.last_hit_time > self.hit_cooldown:
+                    monster.attack()
+                    self.lives -= 1
+                    self.last_hit_time = current_time
 
     def draw_health_bar(self):
         """Отображает шкалу жизней в правом верхнем углу на белом фоне с чёрной рамкой."""
-        bar_width = 160  # Ширина фона под жизни
-        bar_height = 50  # Высота фона
-        bar_x = self.screen_width - bar_width - 20  # Координаты фона (отступ 20px от края)
+        bar_width = 160
+        bar_height = 50
+        bar_x = self.screen_width - bar_width - 20
         bar_y = 20
 
-        # Рисуем белый прямоугольник
         pygame.draw.rect(self.screen, (230, 199, 172), (bar_x, bar_y, bar_width, bar_height))
 
-        # Рисуем чёрную рамку вокруг
         pygame.draw.rect(self.screen, (111, 83, 6), (bar_x, bar_y, bar_width, bar_height), 3)
 
         # Отрисовываем сердца
         for i in range(self.lives):
-            x = bar_x + 10 + (i * 50)  # Отступ от левого края белого прямоугольника
-            y = bar_y + 5  # Отступ сверху внутри белого фона
+            x = bar_x + 10 + (i * 50)
+            y = bar_y + 5
             self.screen.blit(self.heart_image, (x, y))
 
     def run(self):
@@ -233,9 +188,14 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
     # intro = IntroScreen()
-    # intro.run()
-    # end = GameOverScreen()
-    # end.run()
+    # intro.run()  # Если нажата "PLAY", продолжаем, иначе закрываем игру
+    while True:
+        game = Game()
+        game.run()
+
+        game_over_screen = GameOverScreen()
+        choice = game_over_screen.run()
+
+        if choice == "NO":
+            break
