@@ -48,10 +48,10 @@ class MapLoader:
         return all(0 <= cy < rows and 0 <= cx < cols and self.map_data[cy][cx] == "L" for cx, cy in corners)
 
     def is_wall(self, x, y):
-        """ Проверяет, является ли клетка стеной 'S' """
+        """ Проверяет, является ли клетка стеной 'C' """
         cell_x, cell_y = x // CELL_SIZE, y // CELL_SIZE
         if 0 <= cell_y < len(self.map_data) and 0 <= cell_x < len(self.map_data[0]):
-            return self.map_data[cell_y][cell_x] == "S"
+            return self.map_data[cell_y][cell_x] == "C"
         return False
 
 
@@ -96,6 +96,19 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
     def init_hero_position(self):
+        # Находим середину карты
+        mid_y = len(self.map_loader.map_data) // 2
+        mid_x = len(self.map_loader.map_data[0]) // 2
+
+        # Ищем ближайшую клетку 'L' вокруг середины карты
+        for y in range(mid_y - 1, mid_y + 2):  # Проверяем три строки вокруг середины
+            for x in range(mid_x - 1, mid_x + 2):  # Проверяем три столбца вокруг середины
+                if 0 <= y < len(self.map_loader.map_data) and 0 <= x < len(self.map_loader.map_data[0]):
+                    if self.map_loader.map_data[y][x] == "L":
+                        self.hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
+                        return
+
+        # Если не нашли клетку 'L' вокруг середины, ищем первую попавшуюся
         for y, row in enumerate(self.map_loader.map_data):
             for x, cell in enumerate(row):
                 if cell == "L":
