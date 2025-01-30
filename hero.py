@@ -12,6 +12,14 @@ class Hero:
         self.moving_direction = None  # Направление движения
         self.load_animations()
 
+        self.bonuses = []
+
+    def collect_bonus(self, bonus):
+        """Собирает бонус, если касается его."""
+        if self.rect.colliderect(bonus.rect):
+            self.bonuses.append(bonus)
+            bonus.kill()
+
     def load_animations(self):
         img_run_d = pygame.image.load("hero_assets/_Run.png")
         img_run_a = pygame.image.load("hero_assets/inv_Run.png")

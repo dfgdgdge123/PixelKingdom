@@ -1,6 +1,19 @@
 import pygame
 
 
+class Bonus(pygame.sprite.Sprite):
+    """Класс бонуса, который может быть подобран героем."""
+    def __init__(self, image_path, x, y):
+        super().__init__()
+        self.image = pygame.image.load(image_path)
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
+    def draw(self, screen):
+        """Отрисовка бонуса."""
+        screen.blit(self.image, self.rect)
+
+
 class Monster(pygame.sprite.Sprite):
     def __init__(self, image_path, x, y, speed, map_loader, anim_run, anim_death, anim_hit, anim_attack):
         super().__init__()

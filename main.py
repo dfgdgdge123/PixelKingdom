@@ -1,3 +1,5 @@
+import random
+
 import pygame
 import sys
 from intro_end import IntroScreen, GameOverScreen
@@ -62,42 +64,36 @@ class Game:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Pixel Kingdom")
 
-        self.heart_image = pygame.image.load("hero_assets/heart.png")  # Укажите путь к файлу сердца
-        self.heart_image = pygame.transform.scale(self.heart_image, (40, 40))  # Масштабируем
+        self.heart_image = pygame.image.load("hero_assets/heart.png")
+        self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
 
-        self.lives = 3  # Количество жизней героя
+        self.lives = 10  # Количество жизней героя
 
         self.castle = pygame.image.load('map_assets/castle.png')
         self.hero = Hero()
         self.clock = pygame.time.Clock()
         self.init_hero_position()
 
-        self.monsters = [
-            Sceleton(self.screen_width, self.screen_height, self.map_loader, speed=1),
-            Eye(self.screen_width, self.screen_height, self.map_loader, speed=1.5),
-            Goblin(self.screen_width, self.screen_height, self.map_loader, speed=2),
-            Mushroom(self.screen_width, self.screen_height, self.map_loader, speed=1.3),
-        ]
+        # self.monsters = [
+        #     Sceleton(self.screen_width, self.screen_height, self.map_loader, speed=1),
+        #     Eye(self.screen_width, self.screen_height, self.map_loader, speed=1.5),
+        #     Goblin(self.screen_width, self.screen_height, self.map_loader, speed=2),
+        #     Mushroom(self.screen_width, self.screen_height, self.map_loader, speed=1.3),
+        # ]
+
         self.monster_hits = {
-            Sceleton: {"hits_to_kill": 2, "hit_count": {}},
-            Eye: {"hits_to_kill": 2, "hit_count": {}},
+            Sceleton: {"hits_to_kill": 5, "hit_count": {}},
+            Eye: {"hits_to_kill": 3, "hit_count": {}},
             Goblin: {"hits_to_kill": 2, "hit_count": {}},
-            Mushroom: {"hits_to_kill": 2, "hit_count": {}},
+            Mushroom: {"hits_to_kill": 4, "hit_count": {}},
         }
 
-        self.hits_to_kill_sceleton = 2  # Количество ударов для убийства скелета
-        self.sceleton_hit_count = {}  # Счетчик ударов по каждому скелету
-        self.last_hit_time = 0  # Время последнего удара по герою
-        self.hit_cooldown = 1000  # Кулдаун между ударами (в миллисекундах)
+        self.last_hit_time = 0
+        self.hit_cooldown = 1500
 
-        self.hits_to_kill_eye = 2  # Количество ударов для убийства скелета
-        self.eye_hit_count = {}
-
-        self.hits_to_kill_goblin = 2  # Количество ударов для убийства скелета
-        self.goblin_hit_count = {}
-
-        self.hits_to_kill_mushroom = 2  # Количество ударов для убийства скелета
-        self.mushroom_hit_count = {}
+        self.monsters = []
+        self.spawn_time = 5000  # Интервал спавна в миллисекундах (5 секунд)
+        self.last_spawn = pygame.time.get_ticks()
 
     def init_hero_position(self):
         for y, row in enumerate(self.map_loader.map_data):
@@ -126,28 +122,83 @@ class Game:
             if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
                 if current_time - self.last_hit_time > self.hit_cooldown:
                     monster.attack()
-                    self.lives -= 1
+                    self.lives -= 0.5  # Монстры теперь могут наносить 0.5 или 1 урона
                     self.last_hit_time = current_time
 
+                    if self.lives <= 0:
+                        self.game_over()
+
     def draw_health_bar(self):
-        """Отображает шкалу жизней в правом верхнем углу на белом фоне с чёрной рамкой."""
-        bar_width = 160
-        bar_height = 50
+        """Отображает шкалу жизней в правом верхнем углу."""
+        bar_width = 510
+        bar_height = 40
         bar_x = self.screen_width - bar_width - 20
         bar_y = 20
 
         pygame.draw.rect(self.screen, (230, 199, 172), (bar_x, bar_y, bar_width, bar_height))
-
         pygame.draw.rect(self.screen, (111, 83, 6), (bar_x, bar_y, bar_width, bar_height), 3)
 
-        # Отрисовываем сердца
-        for i in range(self.lives):
+        full_hearts = int(self.lives)
+        has_half_heart = self.lives - full_hearts >= 0.5
+
+        for i in range(full_hearts):
             x = bar_x + 10 + (i * 50)
             y = bar_y + 5
             self.screen.blit(self.heart_image, (x, y))
 
+        if has_half_heart:
+            x = bar_x + 10 + (full_hearts * 50)
+            y = bar_y + 5
+            half_heart = self.heart_image.subsurface(0, 0, 15, 30)  # Половина сердца
+            self.screen.blit(half_heart, (x, y))
+
+    def game_over(self):
+        """Запускает экран окончания игры."""
+        game_over_screen = GameOverScreen()
+        choice = game_over_screen.run()
+
+        if choice == "NO":
+            pygame.quit()
+            sys.exit()
+        else:
+            self.__init__()  # Перезапуск игры
+
+    def spawn_monster(self):
+        """Спавнит 2-3 монстра сразу, с одинаковым X, но разным Y"""
+        num_monsters = random.randint(2, 5)  # Спавним 2-3 монстра одновременно
+        spawn_x = 170  # Все монстры появляются на одной линии X
+
+        used_y_positions = []  # Список для хранения использованных y-координат
+
+        for _ in range(num_monsters):
+            monster_type = random.choices(
+                [Sceleton, Eye, Goblin, Mushroom],
+                weights=[15, 30, 25, 30],  # Вероятность появления разных типов монстров
+                k=1
+            )[0]
+
+            # Генерируем уникальную y-координату
+            available_y_positions = [200, 250, 300, 350, 400]
+            available_y_positions = [y for y in available_y_positions if y not in used_y_positions]
+
+            if not available_y_positions:
+                break  # Если все y-координаты заняты, прекращаем спавн
+
+            spawn_y = random.choice(available_y_positions)  # Рандомный Y-координат из оставшихся
+
+            # Добавляем координату в список использованных
+            used_y_positions.append(spawn_y)
+
+            new_monster = monster_type(self.screen_width, self.screen_height, self.map_loader,
+                                       speed=random.uniform(1.0, 2.5))
+            new_monster.rect.x = spawn_x  # Устанавливаем X одинаковым
+            new_monster.rect.y = spawn_y  # Устанавливаем Y случайным
+            self.monsters.append(new_monster)
+
     def run(self):
         while True:
+            current_time = pygame.time.get_ticks()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -163,30 +214,41 @@ class Game:
             self.hero.move(self.map_loader, keys)
             self.hero.animate()
 
-            # ОБНОВЛЕНИЕ МОНСТРОВ
+            if current_time - self.last_spawn > self.spawn_time:
+                self.spawn_monster()
+                self.last_spawn = current_time
+
             for monster in self.monsters:
                 monster.update()
 
-            # Проверка столкновений с героем
             self.check_monster_collision()
 
-            # Рендеринг
             self.screen.fill((124, 172, 46))
+
             self.map_loader.draw_map(self.screen)
             self.screen.blit(self.castle, (self.screen_width // 1.19, self.screen_height // 2.5))
 
-            # ОТРИСОВКА МОНСТРОВ
             for monster in self.monsters:
                 monster.draw(self.screen)
 
             self.screen.blit(self.hero.image, self.hero.rect)
-
             self.draw_health_bar()
 
             pygame.display.flip()
             self.clock.tick(60)
 
 
+# if __name__ == "__main__":
+#     intro = IntroScreen()
+#     if intro.run() == "EXIT":
+#         pygame.quit()
+#         sys.exit()
+#
+#     while True:
+#         game = Game()
+#         game.run()
+#
+#
 if __name__ == "__main__":
     # intro = IntroScreen()
     # intro.run()  # Если нажата "PLAY", продолжаем, иначе закрываем игру
