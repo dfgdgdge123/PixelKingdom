@@ -3,9 +3,10 @@ import pygame
 
 class Hero:
     def __init__(self):
-        self.stand_sprite = pygame.image.load("hero_assets/hero.png")
+        self.stand_sprite = pygame.image.load("hero_assets/hero.png").subsurface(40, 40, 25, 40)
         self.image = self.stand_sprite
         self.rect = self.image.get_rect()
+
         self.frame = 0
         self.is_r_attacking = False  # Флаг атаки
         self.is_l_attacking = False

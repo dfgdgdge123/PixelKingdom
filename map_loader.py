@@ -23,11 +23,17 @@ class MapLoader:
         with open(filename, "r") as file:
             return [line.strip() for line in file]
 
-    def draw_map(self, screen):
+    def draw_map(self, screen, camera_x=0, camera_y=0, camera_zoom=1.0):
+        """Рисует карту с учетом камеры (смещения и увеличения)."""
         for y, row in enumerate(self.map_data):
             for x, cell in enumerate(row):
                 if cell in self.assets:
-                    screen.blit(self.assets[cell], (x * CELL_SIZE, y * CELL_SIZE))
+                    draw_x = (x * CELL_SIZE - camera_x) * camera_zoom
+                    draw_y = (y * CELL_SIZE - camera_y) * camera_zoom
+                    draw_size = int(CELL_SIZE * camera_zoom)
+
+                    tile_image = pygame.transform.scale(self.assets[cell], (draw_size, draw_size))
+                    screen.blit(tile_image, (draw_x, draw_y))
 
     def can_move(self, x, y, hero_width, hero_height):
         rows, cols = len(self.map_data), len(self.map_data[0])

@@ -47,6 +47,32 @@ class Game:
 
         self.bonuses = []
 
+        # Камера
+        self.camera_x = 0
+        self.camera_y = 0
+        self.camera_zoom = 1.2  # Увеличение камеры
+        self.camera_smoothness = 0.1  # Плавность движения камеры
+
+    def apply_camera(self, surface, rect):
+        """Применяет смещение и масштабирование камеры к объекту."""
+        scaled_rect = pygame.Rect(
+            (rect.x - self.camera_x) * self.camera_zoom,
+            (rect.y - self.camera_y) * self.camera_zoom,
+            rect.width * self.camera_zoom,
+            rect.height * self.camera_zoom
+        )
+        scaled_surface = pygame.transform.scale(surface, (scaled_rect.width, scaled_rect.height))
+        return scaled_surface, scaled_rect
+
+    def update_camera(self):
+        """Обновляет позицию камеры, чтобы следовать за героем."""
+        target_x = self.hero.rect.x - self.screen_width // (2 * self.camera_zoom)
+        target_y = self.hero.rect.y - self.screen_height // (2 * self.camera_zoom)
+
+        # Движение камеры
+        self.camera_x += (target_x - self.camera_x) * self.camera_smoothness
+        self.camera_y += (target_y - self.camera_y) * self.camera_smoothness
+
     def init_hero_position(self):
         # Находим середину карты
         mid_y = len(self.map_loader.map_data) // 2
@@ -192,37 +218,34 @@ class Game:
                 monster.update()
 
             self.check_monster_collision()
-            self.check_bonus_collision()  # Добавляем проверку столкновений с бонусами
+            self.check_bonus_collision()
 
             self.screen.fill((124, 172, 46))
 
-            self.map_loader.draw_map(self.screen)
-            self.screen.blit(self.castle, (self.screen_width // 1.19, self.screen_height // 2.5))
+            self.update_camera()
+
+            self.map_loader.draw_map(self.screen, self.camera_x, self.camera_y, self.camera_zoom)
+
+            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
+            self.screen.blit(castle_surface, castle_rect)
 
             for monster in self.monsters:
-                monster.draw(self.screen)
+                monster_surface, monster_rect = self.apply_camera(monster.image, monster.rect)
+                self.screen.blit(monster_surface, monster_rect)
 
             for bonus in self.bonuses:
-                bonus.draw(self.screen)
+                bonus_surface, bonus_rect = self.apply_camera(bonus.image, bonus.rect)
+                self.screen.blit(bonus_surface, bonus_rect)
 
-            self.screen.blit(self.hero.image, self.hero.rect)
+            hero_surface, hero_rect = self.apply_camera(self.hero.image, self.hero.rect)
+            self.screen.blit(hero_surface, hero_rect)
+
             self.draw_health_bar()
 
             pygame.display.flip()
             self.clock.tick(60)
 
 
-# if __name__ == "__main__":
-#     intro = IntroScreen()
-#     if intro.run() == "EXIT":
-#         pygame.quit()
-#         sys.exit()
-#
-#     while True:
-#         game = Game()
-#         game.run()
-#
-#
 if __name__ == "__main__":
     # intro = IntroScreen()
     # intro.run()  # Если нажата "PLAY", продолжаем, иначе закрываем игру
