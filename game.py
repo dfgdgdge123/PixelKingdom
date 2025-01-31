@@ -5,54 +5,11 @@ import sys
 from intro_end import IntroScreen, GameOverScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
+from map_loader import MapLoader
 
 pygame.init()
 
 CELL_SIZE = 50
-
-
-class MapLoader:
-    def __init__(self, filename):
-        self.map_data = self.load_map(filename)
-        self.assets = {
-            "L": pygame.image.load("map_assets/land.jpg"),
-            "G": pygame.image.load("map_assets/grass.jpg"),
-            "F": pygame.image.load("map_assets/fild.jpg"),
-            "C": pygame.image.load("map_assets/castle_floor.jpg"),
-            "S": pygame.image.load("map_assets/castle_walls.jpg"),
-            "1": pygame.image.load("map_assets/three1.jpg"),
-            "2": pygame.image.load("map_assets/three2.jpg"),
-            "3": pygame.image.load("map_assets/three3.jpg"),
-            "4": pygame.image.load("map_assets/three3.jpg"),
-            "5": pygame.image.load("map_assets/three5.jpg"),
-        }
-
-    def load_map(self, filename):
-        with open(filename, "r") as file:
-            return [line.strip() for line in file]
-
-    def draw_map(self, screen):
-        for y, row in enumerate(self.map_data):
-            for x, cell in enumerate(row):
-                if cell in self.assets:
-                    screen.blit(self.assets[cell], (x * CELL_SIZE, y * CELL_SIZE))
-
-    def can_move(self, x, y, hero_width, hero_height):
-        rows, cols = len(self.map_data), len(self.map_data[0])
-        corners = [
-            (x // CELL_SIZE, y // CELL_SIZE),
-            ((x + hero_width) // CELL_SIZE, y // CELL_SIZE),
-            (x // CELL_SIZE, (y + hero_height) // CELL_SIZE),
-            ((x + hero_width) // CELL_SIZE, (y + hero_height) // CELL_SIZE),
-        ]
-        return all(0 <= cy < rows and 0 <= cx < cols and self.map_data[cy][cx] == "L" for cx, cy in corners)
-
-    def is_wall(self, x, y):
-        """ Проверяет, является ли клетка стеной 'C' """
-        cell_x, cell_y = x // CELL_SIZE, y // CELL_SIZE
-        if 0 <= cell_y < len(self.map_data) and 0 <= cell_x < len(self.map_data[0]):
-            return self.map_data[cell_y][cell_x] == "C"
-        return False
 
 
 class Game:
@@ -74,13 +31,6 @@ class Game:
         self.clock = pygame.time.Clock()
         self.init_hero_position()
 
-        # self.monsters = [
-        #     Sceleton(self.screen_width, self.screen_height, self.map_loader, speed=1),
-        #     Eye(self.screen_width, self.screen_height, self.map_loader, speed=1.5),
-        #     Goblin(self.screen_width, self.screen_height, self.map_loader, speed=2),
-        #     Mushroom(self.screen_width, self.screen_height, self.map_loader, speed=1.3),
-        # ]
-
         self.monster_hits = {
             Sceleton: {"hits_to_kill": 5, "hit_count": {}},
             Eye: {"hits_to_kill": 3, "hit_count": {}},
@@ -95,20 +45,20 @@ class Game:
         self.spawn_time = 5000  # Интервал спавна в миллисекундах (5 секунд)
         self.last_spawn = pygame.time.get_ticks()
 
+        self.bonuses = []
+
     def init_hero_position(self):
         # Находим середину карты
         mid_y = len(self.map_loader.map_data) // 2
         mid_x = len(self.map_loader.map_data[0]) // 2
 
-        # Ищем ближайшую клетку 'L' вокруг середины карты
-        for y in range(mid_y - 1, mid_y + 2):  # Проверяем три строки вокруг середины
-            for x in range(mid_x - 1, mid_x + 2):  # Проверяем три столбца вокруг середины
+        for y in range(mid_y - 1, mid_y + 2):
+            for x in range(mid_x - 1, mid_x + 2):
                 if 0 <= y < len(self.map_loader.map_data) and 0 <= x < len(self.map_loader.map_data[0]):
                     if self.map_loader.map_data[y][x] == "L":
                         self.hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
                         return
 
-        # Если не нашли клетку 'L' вокруг середины, ищем первую попавшуюся
         for y, row in enumerate(self.map_loader.map_data):
             for x, cell in enumerate(row):
                 if cell == "L":
@@ -190,7 +140,6 @@ class Game:
                 k=1
             )[0]
 
-            # Генерируем уникальную y-координату
             available_y_positions = [200, 250, 300, 350, 400]
             available_y_positions = [y for y in available_y_positions if y not in used_y_positions]
 
@@ -201,11 +150,20 @@ class Game:
 
             used_y_positions.append(spawn_y)
 
+            # Передаём self в качестве game
             new_monster = monster_type(self.screen_width, self.screen_height, self.map_loader,
-                                       speed=random.uniform(1.0, 2.5))
+                                       speed=random.uniform(1.0, 2.5), game=self)
+
             new_monster.rect.x = spawn_x
             new_monster.rect.y = spawn_y
             self.monsters.append(new_monster)
+
+    def check_bonus_collision(self):
+        """Проверяет, взял ли герой бонус, и применяет эффект."""
+        for bonus in self.bonuses[:]:
+            if self.hero.rect.colliderect(bonus.rect):
+                bonus.apply(self.hero)
+                self.bonuses.remove(bonus)
 
     def run(self):
         while True:
@@ -234,6 +192,7 @@ class Game:
                 monster.update()
 
             self.check_monster_collision()
+            self.check_bonus_collision()  # Добавляем проверку столкновений с бонусами
 
             self.screen.fill((124, 172, 46))
 
@@ -242,6 +201,9 @@ class Game:
 
             for monster in self.monsters:
                 monster.draw(self.screen)
+
+            for bonus in self.bonuses:
+                bonus.draw(self.screen)
 
             self.screen.blit(self.hero.image, self.hero.rect)
             self.draw_health_bar()

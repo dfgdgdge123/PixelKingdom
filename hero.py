@@ -13,6 +13,9 @@ class Hero:
         self.load_animations()
 
         self.bonuses = []
+        self.speed = 3  # Базовая скорость героя
+        self.attack_power = 1  # Базовая сила атаки
+        self.lives = 10  # Количество жизней героя
 
     def collect_bonus(self, bonus):
         """Собирает бонус, если касается его."""
