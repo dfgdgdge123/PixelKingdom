@@ -11,7 +11,7 @@ class IntroScreen:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("Intro to game")
 
-        self.bg_image = pygame.image.load("intro_end/background.jpg")
+        self.bg_image = pygame.image.load("intro_end/background.png")
         self.bg_image = pygame.transform.scale(self.bg_image, (self.WIDTH, self.HEIGHT))
 
         self.font = pygame.font.Font(self.FONT_PATH, 80) if self.FONT_PATH else pygame.font.SysFont("impact", 80)
@@ -67,13 +67,11 @@ class IntroScreen:
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if play_button.collidepoint(event.pos):
-                        print("Play clicked!")
-                        return
+                        return "PLAY"  # Возвращаем "PLAY" при нажатии на кнопку "PLAY"
                     elif menu_button.collidepoint(event.pos):
-                        print("Menu clicked!")
+                        return "STORY"  # Возвращаем "STORY" при нажатии на кнопку "STORY"
                     elif exit_button.collidepoint(event.pos):
-                        pygame.quit()
-                        sys.exit()
+                        return "EXIT"  # Возвращаем "EXIT" при нажатии на кнопку "EXIT"
 
 
 class GameOverScreen:
@@ -147,9 +145,73 @@ class GameOverScreen:
         pygame.quit()
 
 
+class StoryScreen:
+    def __init__(self):
+        pygame.init()  # Инициализация Pygame
+        pygame.font.init()  # Инициализация шрифтов
+
+        self.screen = pygame.display.set_mode((800, 600))
+        self.font = pygame.font.Font(None, 36)
+        self.button_font = pygame.font.Font(None, 28)
+        self.clock = pygame.time.Clock()
+
+    def draw_text(self, text, x, y, color=(255, 255, 255)):
+        text_surface = self.font.render(text, True, color)
+        self.screen.blit(text_surface, (x, y))
+
+    def draw_button(self, text, x, y, width, height, color, hover_color):
+        mouse_pos = pygame.mouse.get_pos()
+        clicked = pygame.mouse.get_pressed()[0]
+
+        button_rect = pygame.Rect(x, y, width, height)
+        if button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, hover_color, button_rect)
+            if clicked:
+                return True
+        else:
+            pygame.draw.rect(self.screen, color, button_rect)
+
+        text_surface = self.button_font.render(text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=button_rect.center)
+        self.screen.blit(text_surface, text_rect)
+        return False
+
+    def run(self):
+        running = True
+        while running:
+            self.screen.fill((0, 0, 0))  # Черный фон
+
+            # Отрисовка текста описания
+            self.draw_text("Описание игры:", 50, 50)
+            self.draw_text("Здесь будет описание игры.", 50, 100)
+            self.draw_text("Вы можете добавить сюда любой текст,", 50, 150)
+            self.draw_text("который расскажет игроку о сюжете.", 50, 200)
+
+            # Кнопка возврата на интро
+            if self.draw_button("Вернуться", 350, 500, 100, 50, (100, 100, 100), (150, 150, 150)):
+                running = False  # Закрываем экран StoryScreen и возвращаемся на IntroScreen
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+
 if __name__ == "__main__":
-    intro = IntroScreen()
-    intro.run()
+    pygame.init()  # Глобальная инициализация Pygame
+    story = StoryScreen()
+    story.run()
+
+
+
+if __name__ == "__main__":
+    # intro = IntroScreen()
+    # intro.run()
+    story = StoryScreen()
+    story.run()
     # game_over_screen = GameOverScreen()
     # game_over_screen.run()
 

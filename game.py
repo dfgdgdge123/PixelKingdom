@@ -2,7 +2,7 @@ import random
 
 import pygame
 import sys
-from intro_end import IntroScreen, GameOverScreen
+from intro_end import IntroScreen, GameOverScreen, StoryScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
 from map_loader import MapLoader
@@ -247,14 +247,29 @@ class Game:
 
 
 if __name__ == "__main__":
-    # intro = IntroScreen()
-    # intro.run()  # Если нажата "PLAY", продолжаем, иначе закрываем игру
     while True:
-        game = Game()
-        game.run()
+        intro = IntroScreen()
+        choice = intro.run()  # Запускаем интро-экран и ждем выбора игрока
 
-        game_over_screen = GameOverScreen()
-        choice = game_over_screen.run()
+        if choice == "PLAY":
+            # Если выбрана кнопка "PLAY", запускаем игру
+            while True:
+                game = Game()
+                game.run()
 
-        if choice == "NO":
-            break
+                # После завершения игры показываем экран GameOverScreen
+                game_over_screen = GameOverScreen()
+                choice = game_over_screen.run()
+
+                if choice == "NO":
+                    break  # Выходим из цикла игры и возвращаемся на интро-экран
+
+        elif choice == "STORY":
+            # Если выбрана кнопка "STORY", открываем экран StoryScreen
+            story_screen = StoryScreen()
+            story_screen.run()  # Запускаем экран StoryScreen
+
+        elif choice == "EXIT":
+            # Если выбрана кнопка "EXIT", завершаем программу
+            pygame.quit()
+            sys.exit()
