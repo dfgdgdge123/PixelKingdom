@@ -48,7 +48,6 @@ class Monster(pygame.sprite.Sprite):
             next_x = self.rect.x + self.speed
             if self.can_move(next_x, self.rect.y):
                 self.rect.x = next_x
-                self.animate()
             else:
                 self.moving = False
 
@@ -60,10 +59,10 @@ class Monster(pygame.sprite.Sprite):
             return self.map_loader.map_data[int(cell_y)][int(cell_x)] != "C"
         return False
 
-    def animate(self):
-        if self.moving:
-            self.frame = (self.frame + self.frame_speed) % len(self.anim_move)
-            self.image = self.anim_move[int(self.frame)]
+    # def animate(self):
+    #     if self.moving:
+    #         self.frame = (self.frame + self.frame_speed) % len(self.can_move)
+    #         self.image = self.can_move[int(self.frame)]
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -90,7 +89,8 @@ class Monster(pygame.sprite.Sprite):
             else:
                 self.image = self.anim_attack[int(self.attack_frame)]
         else:
-            self.rect.x += self.speed
+            # self.rect.x += self.speed
+            self.move()
 
             self.animation_timer += 1
             if self.animation_timer >= 5:
