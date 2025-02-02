@@ -46,8 +46,8 @@ class Hero:
                               img_l_attack.subsurface(7, 46, 62, 34)]
 
     def move(self, map_loader, keys):
-        if self.is_r_attacking or self.is_l_attacking:
-            return  # Во время атаки герой не двигается
+        # if self.is_r_attacking or self.is_l_attacking:
+        #     return  # Во время атаки герой не двигается
 
         new_x, new_y = self.rect.x, self.rect.y
         self.moving_direction = None  # Сбрасываем направление

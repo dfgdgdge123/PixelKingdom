@@ -3,6 +3,7 @@ import pygame
 
 class Bonus(pygame.sprite.Sprite):
     """Класс бонуса, который может быть подобран героем."""
+
     def __init__(self, image_path, x, y, effect):
         super().__init__()
         self.image = pygame.image.load(image_path)
@@ -15,9 +16,13 @@ class Bonus(pygame.sprite.Sprite):
         """Применение бонуса к герою."""
         if self.effect == "speed":
             hero.speed += 1
-        elif self.effect == "health":
-            hero.lives += 1  # Добавляем жизнь
+        elif self.effect == "health" and hero.lives < 10:  # Добавляем жизнь
+            if hero.lives == 9.5:
+                hero.lives = 10
+            else:
+                hero.lives += 1
         elif self.effect == "attack":
+
             hero.attack_power += 1
 
     def draw(self, screen):
