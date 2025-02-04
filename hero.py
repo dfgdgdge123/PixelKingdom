@@ -6,6 +6,7 @@ class Hero:
         self.stand_sprite = pygame.image.load("hero_assets/hero.png").subsurface(40, 40, 25, 40)
         self.image = self.stand_sprite
         self.rect = self.image.get_rect()
+        self.attack_area = pygame.Rect(*self.rect.topleft, self.rect.h * 2, self.rect.h * 2)
 
         self.frame = 0
         self.is_r_attacking = False  # Флаг атаки
@@ -15,14 +16,10 @@ class Hero:
 
         self.bonuses = []
         self.speed = 3  # Базовая скорость героя
+        self.speed_effect_time = None
         self.attack_power = 1  # Базовая сила атаки
-        self.lives = 10  # Количество жизней героя
-
-    def collect_bonus(self, bonus):
-        """Собирает бонус, если касается его."""
-        if self.rect.colliderect(bonus.rect):
-            self.bonuses.append(bonus)
-            bonus.kill()
+        self.attack_effect_time = None
+        self.lives = 5  # Количество жизней героя
 
     def load_animations(self):
         img_run_d = pygame.image.load("hero_assets/_Run.png")
@@ -31,8 +28,8 @@ class Hero:
         img_attack = pygame.image.load("hero_assets/_Attack.png")
         img_l_attack = pygame.image.load("hero_assets/inv_Attack.png")
 
-        self.anim_run_d = [img_run_d.subsurface(x, 42, 28, 38) for x in range(42, 1124, 121)]
-        self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(42, 1124, 121))]
+        self.anim_run_d = [img_run_d.subsurface(x, 42, 28, 38) for x in range(42, 1124, 120)]
+        self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(42, 1124, 120))]
         self.anim_run_ws = [img_run_ws.subsurface(x, 46, 31, 33) for x in range(42, 282, 120)]
 
         self.anim_r_attack = [img_attack.subsurface(36, 43, 40, 37),
@@ -53,16 +50,16 @@ class Hero:
         self.moving_direction = None  # Сбрасываем направление
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            new_x -= 3
+            new_x -= self.speed
             self.moving_direction = "left"
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            new_x += 3
+            new_x += self.speed
             self.moving_direction = "right"
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            new_y += 3
+            new_y += self.speed
             self.moving_direction = "down"
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            new_y -= 3
+            new_y -= self.speed
             self.moving_direction = "up"
 
         if map_loader.can_move(new_x, self.rect.y, self.rect.width, self.rect.height):

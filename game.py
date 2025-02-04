@@ -2,6 +2,7 @@ import random
 
 import pygame
 import sys
+
 from intro_end import IntroScreen, GameOverScreen, StoryScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
@@ -23,8 +24,6 @@ class Game:
 
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
-
-        #self.lives = 10  # Количество жизней героя
 
         self.castle = pygame.image.load('map_assets/castle.png')
         self.hero = Hero()
@@ -91,15 +90,30 @@ class Game:
                     self.hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
                     return
 
+    def check_effects(self):
+        if self.hero.speed > 3:
+            this_time = pygame.time.get_ticks()
+            if this_time - self.hero.speed_effect_time >= 5000:
+                self.hero.speed = 3
+                self.hero.speed_effect_time = None
+        if self.hero.attack_power > 1:
+            this_time = pygame.time.get_ticks()
+            if this_time - self.hero.attack_effect_time >= 5000:
+                self.hero.attack_power = 1
+                self.hero.attack_effect_time = None
+
     def check_attack_collision(self):
+        pygame.time.get_ticks()
+        self.hero.attack_area.center = self.hero.rect.center
         for monster in self.monsters:
             monster_type = type(monster)
-            if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
+            if not monster.is_dead and self.hero.attack_area.colliderect(monster.rect):
                 if monster not in self.monster_hits[monster_type]["hit_count"]:
                     self.monster_hits[monster_type]["hit_count"][monster] = 0
-                self.monster_hits[monster_type]["hit_count"][monster] += 1
+                self.monster_hits[monster_type]["hit_count"][monster] += self.hero.attack_power
 
-                if 1 <= self.monster_hits[monster_type]["hit_count"][monster] <= self.monster_hits[monster_type]["hits_to_kill"]:
+                if (1 <= self.monster_hits[monster_type]["hit_count"][monster] <=
+                        self.monster_hits[monster_type]["hits_to_kill"]):
                     monster.take_hit()
                 elif (self.monster_hits[monster_type]["hit_count"][monster] >=
                       self.monster_hits[monster_type]["hits_to_kill"]):
@@ -199,10 +213,10 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3 and not self.hero.is_r_attacking:
                     self.hero.attack_r()
                     self.check_attack_collision()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not self.hero.is_l_attacking:
                     self.hero.attack_l()
                     self.check_attack_collision()
 
@@ -226,7 +240,8 @@ class Game:
 
             self.map_loader.draw_map(self.screen, self.camera_x, self.camera_y, self.camera_zoom)
 
-            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
+            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(
+                topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
             self.screen.blit(castle_surface, castle_rect)
 
             for monster in self.monsters:
@@ -241,6 +256,7 @@ class Game:
             self.screen.blit(hero_surface, hero_rect)
 
             self.draw_health_bar()
+            self.check_effects()
 
             pygame.display.flip()
             self.clock.tick(60)
