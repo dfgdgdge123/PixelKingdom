@@ -200,10 +200,73 @@ class StoryScreen:
             self.clock.tick(60)
 
 
+class GameWinScreen:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        pygame.display.set_caption("Победа!")
+        self.font = pygame.font.Font(None, 50)
+        self.button_font = pygame.font.Font(None, 36)
+        self.clock = pygame.time.Clock()
+
+        # Загружаем изображение победы (замени на свой путь)
+        self.win_image = pygame.image.load("intro_end/background.png")
+        self.win_image = pygame.transform.scale(self.win_image, (800, 600))
+
+    def draw_text(self, text, x, y, color=(255, 255, 255)):
+        """Рисует текст на экране."""
+        text_surface = self.font.render(text, True, color)
+        self.screen.blit(text_surface, (x, y))
+
+    def draw_button(self, text, x, y, width, height, color, hover_color):
+        """Рисует кнопку и обрабатывает нажатие."""
+        mouse_pos = pygame.mouse.get_pos()
+        clicked = pygame.mouse.get_pressed()[0]
+
+        button_rect = pygame.Rect(x, y, width, height)
+        if button_rect.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, hover_color, button_rect)
+            if clicked:
+                return True
+        else:
+            pygame.draw.rect(self.screen, color, button_rect)
+
+        text_surface = self.button_font.render(text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=button_rect.center)
+        self.screen.blit(text_surface, text_rect)
+        return False
+
+    def run(self):
+        """Главный цикл экрана победы."""
+        while True:
+            self.screen.blit(self.win_image, (0, 0))  # Отображаем картинку
+
+            # Текст поздравления
+            self.draw_text("Поздравляем! Вы выиграли!", 200, 50)
+
+            # Кнопка "Следующий уровень"
+            if self.draw_button("Следующий уровень", 270, 400, 250, 50, (100, 200, 100), (150, 255, 150)):
+                return "NEXT"
+
+            # Кнопка "Выйти"
+            if self.draw_button("Выйти", 350, 470, 100, 50, (200, 100, 100), (255, 150, 150)):
+                pygame.quit()
+                sys.exit()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+
+
 if __name__ == "__main__":
     pygame.init()  # Глобальная инициализация Pygame
-    story = StoryScreen()
-    story.run()
+    win = GameWinScreen()
+    win.run()
 
 
 

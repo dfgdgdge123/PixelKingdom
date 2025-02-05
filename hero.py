@@ -80,31 +80,38 @@ class Hero:
             self.frame = 0
 
     def animate(self):
-        """Анимация персонажа."""
+        """Анимация персонажа с обновлением размеров хитбокса."""
+        previous_center = self.rect.center  # Сохраняем центр перед сменой анимации
+
         if self.is_r_attacking:
             if self.frame < len(self.anim_r_attack) - 1:
                 self.frame += 0.2
             else:
                 self.is_r_attacking = False
             self.image = self.anim_r_attack[int(self.frame)]
-            return
 
-        if self.is_l_attacking:
+        elif self.is_l_attacking:
             if self.frame < len(self.anim_l_attack) - 1:
                 self.frame += 0.2
             else:
                 self.is_l_attacking = False
             self.image = self.anim_l_attack[int(self.frame)]
-            return
 
-        if self.moving_direction == "right":
+        elif self.moving_direction == "right":
             self.frame = (self.frame + 0.1) % len(self.anim_run_d)
             self.image = self.anim_run_d[int(self.frame)]
+
         elif self.moving_direction == "left":
             self.frame = (self.frame + 0.1) % len(self.anim_run_a)
             self.image = self.anim_run_a[int(self.frame)]
+
         elif self.moving_direction in ["up", "down"]:
             self.frame = (self.frame + 0.1) % len(self.anim_run_ws)
             self.image = self.anim_run_ws[int(self.frame)]
+
         else:
             self.image = self.stand_sprite  # Если не двигается — стоит на месте
+
+        # Обновляем `rect`, чтобы он соответствовал новому размеру `image`
+        self.rect = self.image.get_rect()
+        self.rect.center = previous_center  # Сохраняем центр, чтобы спрайт не дёргался
