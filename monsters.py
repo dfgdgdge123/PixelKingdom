@@ -2,6 +2,7 @@ import pygame
 import random
 from bonuses import Bonus
 
+CELL_SIZE = 50
 
 class Monster(pygame.sprite.Sprite):
     def __init__(self, image_path, x, y, speed, map_loader, anim_run, anim_death, anim_hit, anim_attack, game):
@@ -34,7 +35,8 @@ class Monster(pygame.sprite.Sprite):
         self.hit_frame = 0
         self.attack_frame = 0
 
-        self.bonus_drop_chance = 0.8  # 20% вероятность дропа
+        self.bonus_drop_chance = 0.8
+        self.reached_castle = False
 
     def move(self):
         if self.moving:
@@ -43,6 +45,7 @@ class Monster(pygame.sprite.Sprite):
                 self.rect.x = next_x
             else:
                 self.moving = False
+                self.reached_castle = True
 
     def can_move(self, x, y):
         cell_x = (x + self.rect.width) // 50
