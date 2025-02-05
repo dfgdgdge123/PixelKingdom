@@ -97,6 +97,20 @@ class Game:
                     self.hero.rect.topleft = (x * CELL_SIZE, y * CELL_SIZE)
                     return
 
+    # def check_monster_castle_collision(self):
+    #     """Проверяет, коснулся ли монстр стены замка (клетки C)."""
+    #     for monster in self.monsters:
+    #         if not monster.is_dead:
+    #             # Получаем координаты монстра на карте
+    #             cell_x = monster.rect.x // CELL_SIZE
+    #             cell_y = monster.rect.y // CELL_SIZE
+    #
+    #             # Проверяем, находится ли монстр на клетке C
+    #             if 0 <= cell_y < len(self.map_loader.map_data) and 0 <= cell_x < len(self.map_loader.map_data[0]):
+    #                 if self.map_loader.map_data[cell_y][cell_x] == "C":
+    #                     self.game_over()  # Завершаем игру, если монстр коснулся стены замка
+    #                     return  # Выходим из метода, чтобы избежать множественных вызовов game_over
+
     def check_attack_collision(self):
         """Обрабатывает атаку героя и убийство монстров."""
         for monster in self.monsters[:]:  # Копируем список, чтобы безопасно удалять элементы
@@ -301,6 +315,11 @@ class Game:
 
             for monster in self.monsters:
                 monster.update()
+
+                # Проверяем, достиг ли монстр стены замка
+                if monster.reached_castle:
+                    self.game_over()
+                    return  # Завершаем игру
 
             self.check_monster_collision()
             self.check_bonus_collision()
