@@ -4,36 +4,55 @@ CELL_SIZE = 50
 
 
 class MapLoader:
-    def __init__(self, filename):
+    def __init__(self, filename, level=1):
         self.map_data = self.load_map(filename)
-        self.assets = {
-            "L": pygame.image.load("map_assets/land.jpg"),
-            "G": pygame.image.load("map_assets/grass.jpg"),
-            "F": pygame.image.load("map_assets/fild.jpg"),
-            "C": pygame.image.load("map_assets/castle_floor.jpg"),
-            "S": pygame.image.load("map_assets/castle_walls.jpg"),
-            "1": pygame.image.load("map_assets/three1.jpg"),
-            "2": pygame.image.load("map_assets/three2.jpg"),
-            "3": pygame.image.load("map_assets/three3.jpg"),
-            "4": pygame.image.load("map_assets/three3.jpg"),
-            "5": pygame.image.load("map_assets/three5.jpg"),
-        }
+        self.level = level
+        self.assets = self.load_assets_for_level(level)
 
     def load_map(self, filename):
         with open(filename, "r") as file:
             return [line.strip() for line in file]
 
-    def draw_map(self, screen, camera_x=0, camera_y=0, camera_zoom=1.0):
-        """Рисует карту с учетом камеры (смещения и увеличения)."""
+    def load_assets_for_level(self, level):
+        if level == 1:
+            return {
+                "L": pygame.image.load("map_assets/land.jpg"),
+                "G": pygame.image.load("map_assets/grass.jpg"),
+                "F": pygame.image.load("map_assets/fild.jpg"),
+                "C": pygame.image.load("map_assets/castle_floor.jpg"),
+                "S": pygame.image.load("map_assets/castle_walls.jpg"),
+                "1": pygame.image.load("map_assets/three1.jpg"),
+                "2": pygame.image.load("map_assets/three2.jpg"),
+                "3": pygame.image.load("map_assets/three3.jpg"),
+                "4": pygame.image.load("map_assets/three3.jpg"),
+                "5": pygame.image.load("map_assets/three5.jpg"),
+            }
+        elif level == 2:
+            return {
+                "L": pygame.image.load("map_assets/land.jpg"),
+                "G": pygame.image.load("map_assets/grass.jpg"),
+                "F": pygame.image.load("map_assets/fild.jpg"),
+                "C": pygame.image.load("map_assets/castle_floor.jpg"),
+                "S": pygame.image.load("map_assets/castle_walls.jpg"),
+                "1": pygame.image.load("map_assets/three1.jpg"),
+                "2": pygame.image.load("map_assets/three2.jpg"),
+                "3": pygame.image.load("map_assets/three3.jpg"),
+                "4": pygame.image.load("map_assets/three3.jpg"),
+                "5": pygame.image.load("map_assets/three5.jpg"),
+            }
+
+    def draw_map(self, screen, camera_x, camera_y, camera_zoom):
         for y, row in enumerate(self.map_data):
             for x, cell in enumerate(row):
                 if cell in self.assets:
-                    draw_x = (x * CELL_SIZE - camera_x) * camera_zoom
-                    draw_y = (y * CELL_SIZE - camera_y) * camera_zoom
-                    draw_size = int(CELL_SIZE * camera_zoom)
-
-                    tile_image = pygame.transform.scale(self.assets[cell], (draw_size, draw_size))
-                    screen.blit(tile_image, (draw_x, draw_y))
+                    scaled_rect = pygame.Rect(
+                        (x * CELL_SIZE - camera_x) * camera_zoom,
+                        (y * CELL_SIZE - camera_y) * camera_zoom,
+                        CELL_SIZE * camera_zoom,
+                        CELL_SIZE * camera_zoom
+                    )
+                    scaled_surface = pygame.transform.scale(self.assets[cell], (scaled_rect.width, scaled_rect.height))
+                    screen.blit(scaled_surface, scaled_rect)
 
     def can_move(self, x, y, hero_width, hero_height):
         rows, cols = len(self.map_data), len(self.map_data[0])

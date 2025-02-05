@@ -13,13 +13,15 @@ CELL_SIZE = 50
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, level=1):
         pygame.init()
-        self.map_loader = MapLoader("map.txt")
+        self.level = level
+        self.map_loader = MapLoader(f"map_level{level}.txt", level)
+
         self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Pixel Kingdom")
+        pygame.display.set_caption(f"Pixel Kingdom - Level {self.level}")
 
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
@@ -46,7 +48,12 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
         self.bonuses = []
-        self.monsters_killed = 14
+        self.monsters_killed = 0
+
+        self.next_level_button = pygame.Rect(self.screen_width - 200, self.screen_height - 60, 180, 40)
+
+        self.kills_needed = 15 if level == 1 else 25  # Меняем условия победы для второго уровня
+        self.kills = 0
 
         # Камера
         self.camera_x = 0
@@ -140,6 +147,18 @@ class Game:
 
                     if self.lives <= 0:
                         self.game_over()
+
+    def check_monster_castle_collision(self):
+        """Проверяет, коснулся ли монстр стены замка (клетки C)."""
+        for monster in self.monsters:
+            if not monster.is_dead:
+                cell_x = monster.rect.x // CELL_SIZE
+                cell_y = monster.rect.y // CELL_SIZE
+
+                if 0 <= cell_y < len(self.map_loader.map_data) and 0 <= cell_x < len(self.map_loader.map_data[0]):
+                    if self.map_loader.map_data[cell_y][cell_x] == "C":
+                        self.game_over()
+                        return  # Выходим из метода, чтобы избежать множественных вызовов game_over
 
     def draw_health_bar(self):
         """Отображает шкалу жизней в правом верхнем углу."""
@@ -249,10 +268,10 @@ class Game:
 
     def win_game(self):
         """Анимация приближения, ожидание клика по сундуку, затем запуск экрана победы."""
-        self.animate_camera_to_castle()
+        self.animate_camera_to_castle()  # Приближаем камеру к замку
 
         self.chest_opened = False
-        self.chest_image = self.chest_closed_image
+        self.chest_image = self.chest_closed_image  # Убеждаемся, что сундук закрыт
 
         waiting_for_click = True
         while waiting_for_click:
@@ -285,10 +304,22 @@ class Game:
                         choice = win_screen.run()
 
                         if choice == "RESTART":
-                            self.__init__()
+                            self.__init__(self.level)  # Перезапуск текущего уровня
                         elif choice == "EXIT":
                             pygame.quit()
                             sys.exit()
+                        elif choice == "NEXT_LEVEL":
+                            self.level += 1  # Переход на следующий уровень
+                            self.__init__(self.level)
+
+    def draw_next_level_button(self):
+        """Рисует кнопку перехода на следующий уровень"""
+        if self.kills >= self.kills_needed:
+            pygame.draw.rect(self.screen, (0, 100, 255), self.next_level_button)
+            font = pygame.font.Font(None, 30)
+            text = font.render("Next Level", True, (255, 255, 255))
+            text_rect = text.get_rect(center=self.next_level_button.center)
+            self.screen.blit(text, text_rect)
 
     def run(self):
         while True:
@@ -298,12 +329,21 @@ class Game:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                    self.hero.attack_r()
-                    self.check_attack_collision()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.hero.attack_l()
-                    self.check_attack_collision()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 3:
+                        self.hero.attack_r()
+                        self.check_attack_collision()
+                    elif event.button == 1:
+                        self.hero.attack_l()
+                        self.check_attack_collision()
+
+                        # Проверка клика по кнопке "Next Level"
+                        if self.monsters_killed >= self.kills_needed and self.next_level_button.collidepoint(event.pos):
+                            self.level += 1
+                            if self.level > 2:
+                                self.game_over()
+                            else:
+                                self.__init__(self.level)
 
             keys = pygame.key.get_pressed()
             self.hero.move(self.map_loader, keys)
@@ -316,16 +356,16 @@ class Game:
             for monster in self.monsters:
                 monster.update()
 
-                # Проверяем, достиг ли монстр стены замка
-                if monster.reached_castle:
-                    self.game_over()
-                    return  # Завершаем игру
+            self.check_monster_castle_collision()
+            self.check_monster_collision()
 
             self.check_monster_collision()
             self.check_bonus_collision()
 
             # Проверка условий выигрыша
-            if self.monsters_killed >= 15 and self.hero.lives > 0:
+            if self.level == 1 and self.monsters_killed >= 15:
+                self.win_game()
+            elif self.level == 2 and self.monsters_killed >= 25:
                 self.win_game()
 
             self.screen.fill((124, 172, 46))
@@ -351,6 +391,7 @@ class Game:
 
             self.draw_health_bar()
             self.draw_kill_counter()
+            self.draw_next_level_button()
 
             pygame.display.flip()
             self.clock.tick(60)

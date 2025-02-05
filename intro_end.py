@@ -253,7 +253,7 @@ class WinScreen:
         pygame.font.init()
         self.screen = pygame.display.set_mode((800, 600))
         self.background = pygame.image.load("intro_end/background.png")
-        # self.win_image = pygame.image.load("map_assets/chest.png")
+        # self.chest_image = pygame.image.load("chest.png")
         self.font = pygame.font.Font(None, 74)
         self.button_font = pygame.font.Font(None, 50)
         self.clock = pygame.time.Clock()
@@ -271,24 +271,30 @@ class WinScreen:
                         return "RESTART"
                     elif 300 <= mouse_pos[0] <= 500 and 500 <= mouse_pos[1] <= 550:
                         return "EXIT"
+                    elif 300 <= mouse_pos[0] <= 500 and 600 <= mouse_pos[1] <= 650:
+                        return "NEXT_LEVEL"  # Новая кнопка для перехода на следующий уровень
 
             self.screen.blit(self.background, (0, 0))
-            # self.screen.blit(self.win_image, (300, 200))
+            # self.screen.blit(self.chest_image, (300, 200))
 
             win_text = self.font.render("You Win!", True, (255, 215, 0))
             self.screen.blit(win_text, (300, 100))
 
             restart_button = pygame.Rect(300, 400, 200, 50)
             exit_button = pygame.Rect(300, 500, 200, 50)
+            next_level_button = pygame.Rect(300, 300, 200, 50)  # Новая кнопка
 
             pygame.draw.rect(self.screen, (0, 255, 0), restart_button)
             pygame.draw.rect(self.screen, (255, 0, 0), exit_button)
+            pygame.draw.rect(self.screen, (0, 0, 255), next_level_button)  # Новая кнопка
 
             restart_text = self.button_font.render("Restart", True, (0, 0, 0))
             exit_text = self.button_font.render("Exit", True, (0, 0, 0))
+            next_level_text = self.button_font.render("Next Level", True, (0, 0, 0))  # Текст новой кнопки
 
             self.screen.blit(restart_text, (350, 410))
             self.screen.blit(exit_text, (370, 510))
+            self.screen.blit(next_level_text, (330, 610))  # Отрисовка текста новой кнопки
 
             pygame.display.flip()
             self.clock.tick(60)
