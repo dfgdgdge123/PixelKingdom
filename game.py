@@ -21,7 +21,6 @@ class Game:
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Pixel Kingdom")
-
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
 
@@ -125,11 +124,7 @@ class Game:
             if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
                 if current_time - self.last_hit_time > self.hit_cooldown:
                     monster.attack()
-                    self.hero.lives -= 0.5
                     self.last_hit_time = current_time
-
-                    if self.hero.lives <= 0:
-                        self.game_over()
 
     def draw_health_bar(self):
         """Отображает шкалу жизней в правом верхнем углу."""
@@ -229,12 +224,13 @@ class Game:
                 self.last_spawn = current_time
 
             for monster in self.monsters:
-                monster.update()
+                monster.update(self, self.hero)
 
             self.check_monster_collision()
             self.check_bonus_collision()
 
             self.screen.fill((124, 172, 46))
+            self.screen.blit(self.map_loader.background, (0, 0))
 
             self.update_camera()
 

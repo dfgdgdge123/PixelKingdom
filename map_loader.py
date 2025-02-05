@@ -18,6 +18,7 @@ class MapLoader:
             "4": pygame.image.load("map_assets/three3.jpg"),
             "5": pygame.image.load("map_assets/three5.jpg"),
         }
+        self.background = pygame.image.load("map_assets/background.png")
 
     def load_map(self, filename):
         with open(filename, "r") as file:

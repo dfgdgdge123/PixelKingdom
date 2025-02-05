@@ -60,7 +60,7 @@ class Monster(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-    def update(self):
+    def update(self, game, hero):
         if self.is_dead:
             self.death_frame += 0.2
             if self.death_frame >= len(self.anim_death):
@@ -77,6 +77,10 @@ class Monster(pygame.sprite.Sprite):
         elif self.is_attacking:
             self.attack_frame += 0.2
             if self.attack_frame >= len(self.anim_attack):
+                if not self.is_dead and hero.rect.colliderect(self.rect):
+                    hero.lives -= 0.5
+                    if hero.lives <= 0:
+                        game.game_over()
                 self.is_attacking = False
                 self.attack_frame = 0
             else:
