@@ -2,7 +2,7 @@ import random
 
 import pygame
 import sys
-from intro_end import IntroScreen, GameOverScreen, StoryScreen
+from intro_end import IntroScreen, GameOverScreen, StoryScreen, WinScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
 from map_loader import MapLoader
@@ -46,12 +46,18 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
         self.bonuses = []
+        self.monsters_killed = 14
 
         # Камера
         self.camera_x = 0
         self.camera_y = 0
         self.camera_zoom = 1.2  # Увеличение камеры
         self.camera_smoothness = 0.1  # Плавность движения камеры
+
+        self.chest_closed_image = pygame.image.load("map_assets/chest.png").subsurface(255, 133, 211, 163)
+        self.chest_opened_image = pygame.image.load("map_assets/chest.png").subsurface(40, 70, 218, 232)
+        self.chest_rect = pygame.Rect(self.screen_width // 1.19 + 50, self.screen_height // 2.5 + 100, 50, 50)
+        self.chest_opened = False  # Флаг, открыт ли сундук
 
     def apply_camera(self, surface, rect):
         """Применяет смещение и масштабирование камеры к объекту."""
@@ -92,7 +98,8 @@ class Game:
                     return
 
     def check_attack_collision(self):
-        for monster in self.monsters:
+        """Обрабатывает атаку героя и убийство монстров."""
+        for monster in self.monsters[:]:  # Копируем список, чтобы безопасно удалять элементы
             monster_type = type(monster)
             if not monster.is_dead and self.hero.rect.colliderect(monster.rect):
                 if monster not in self.monster_hits[monster_type]["hit_count"]:
@@ -101,9 +108,12 @@ class Game:
 
                 if self.monster_hits[monster_type]["hit_count"][monster] == 1:
                     monster.take_hit()
-                elif (self.monster_hits[monster_type]["hit_count"][monster] >=
-                      self.monster_hits[monster_type]["hits_to_kill"]):
+                elif self.monster_hits[monster_type]["hit_count"][monster] >= self.monster_hits[monster_type][
+                    "hits_to_kill"]:
+                    self.monsters_killed += 1  # Увеличиваем счётчик убитых монстров
                     monster.die()
+                    self.monsters.remove(monster)  # Удаляем монстра из списка
+                    # self.check_victory_conditions()  # Проверяем победу
 
     def check_monster_collision(self):
         current_time = pygame.time.get_ticks()
@@ -140,6 +150,17 @@ class Game:
             y = bar_y + 5
             half_heart = self.heart_image.subsurface(0, 0, 15, 30)  # Половина сердца
             self.screen.blit(half_heart, (x, y))
+
+    def draw_kill_counter(self):
+        """Отображает количество убитых монстров в левом верхнем углу."""
+        font = pygame.font.Font(None, 36)
+        text = font.render(f"Убито монстров: {self.monsters_killed}", True, (255, 255, 255))
+
+        # Фон под текстом
+        text_bg_rect = pygame.Rect(15, 15, 250, 32)
+        pygame.draw.rect(self.screen, (0, 0, 0, 128), text_bg_rect)
+
+        self.screen.blit(text, (20, 20))
 
     def game_over(self):
         """Запускает экран окончания игры."""
@@ -191,6 +212,70 @@ class Game:
                 bonus.apply(self.hero)
                 self.bonuses.remove(bonus)
 
+    def animate_camera_to_castle(self):
+        """Анимация приближения камеры к замку."""
+        target_x = self.screen_width // 1 - self.screen_width // (2 * self.camera_zoom)
+        target_y = self.screen_height // 1.5 - self.screen_height // (2 * self.camera_zoom)
+
+        # движение камеры к замку
+        while abs(self.camera_x - target_x) > 1 or abs(self.camera_y - target_y) > 1:
+            self.camera_x += (target_x - self.camera_x) * 0.1
+            self.camera_y += (target_y - self.camera_y) * 0.1
+            self.camera_zoom += 0.01
+
+            self.screen.fill((124, 172, 46))
+            self.map_loader.draw_map(self.screen, self.camera_x, self.camera_y, self.camera_zoom)
+
+            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(
+                topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
+            self.screen.blit(castle_surface, castle_rect)
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+    def win_game(self):
+        """Анимация приближения, ожидание клика по сундуку, затем запуск экрана победы."""
+        self.animate_camera_to_castle()
+
+        self.chest_opened = False
+        self.chest_image = self.chest_closed_image
+
+        waiting_for_click = True
+        while waiting_for_click:
+            self.screen.fill((124, 172, 46))
+            self.map_loader.draw_map(self.screen, self.camera_x, self.camera_y, self.camera_zoom)
+
+            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(
+                topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
+            self.screen.blit(castle_surface, castle_rect)
+
+            chest_surface, chest_rect = self.apply_camera(self.chest_image, self.chest_rect)
+            self.screen.blit(chest_surface, chest_rect)
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if chest_rect.collidepoint(event.pos):
+                        self.chest_opened = True
+                        self.chest_image = self.chest_opened_image
+                        waiting_for_click = False
+
+                        pygame.time.delay(5000)
+
+                        win_screen = WinScreen()
+                        choice = win_screen.run()
+
+                        if choice == "RESTART":
+                            self.__init__()
+                        elif choice == "EXIT":
+                            pygame.quit()
+                            sys.exit()
+
     def run(self):
         while True:
             current_time = pygame.time.get_ticks()
@@ -220,13 +305,18 @@ class Game:
             self.check_monster_collision()
             self.check_bonus_collision()
 
+            # Проверка условий выигрыша
+            if self.monsters_killed >= 15 and self.hero.lives > 0:
+                self.win_game()
+
             self.screen.fill((124, 172, 46))
 
             self.update_camera()
 
             self.map_loader.draw_map(self.screen, self.camera_x, self.camera_y, self.camera_zoom)
 
-            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
+            castle_surface, castle_rect = self.apply_camera(self.castle, self.castle.get_rect(
+                topleft=(self.screen_width // 1.19, self.screen_height // 2.5)))
             self.screen.blit(castle_surface, castle_rect)
 
             for monster in self.monsters:
@@ -241,6 +331,7 @@ class Game:
             self.screen.blit(hero_surface, hero_rect)
 
             self.draw_health_bar()
+            self.draw_kill_counter()
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -248,28 +339,27 @@ class Game:
 
 if __name__ == "__main__":
     while True:
+        game = Game()
+        game.run()
+
         intro = IntroScreen()
-        choice = intro.run()  # Запускаем интро-экран и ждем выбора игрока
+        choice = intro.run()
 
         if choice == "PLAY":
-            # Если выбрана кнопка "PLAY", запускаем игру
             while True:
                 game = Game()
                 game.run()
 
-                # После завершения игры показываем экран GameOverScreen
                 game_over_screen = GameOverScreen()
                 choice = game_over_screen.run()
 
                 if choice == "NO":
-                    break  # Выходим из цикла игры и возвращаемся на интро-экран
+                    break
 
         elif choice == "STORY":
-            # Если выбрана кнопка "STORY", открываем экран StoryScreen
             story_screen = StoryScreen()
-            story_screen.run()  # Запускаем экран StoryScreen
+            story_screen.run()
 
         elif choice == "EXIT":
-            # Если выбрана кнопка "EXIT", завершаем программу
             pygame.quit()
             sys.exit()

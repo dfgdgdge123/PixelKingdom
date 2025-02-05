@@ -67,11 +67,11 @@ class IntroScreen:
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if play_button.collidepoint(event.pos):
-                        return "PLAY"  # Возвращаем "PLAY" при нажатии на кнопку "PLAY"
+                        return "PLAY"
                     elif menu_button.collidepoint(event.pos):
-                        return "STORY"  # Возвращаем "STORY" при нажатии на кнопку "STORY"
+                        return "STORY"
                     elif exit_button.collidepoint(event.pos):
-                        return "EXIT"  # Возвращаем "EXIT" при нажатии на кнопку "EXIT"
+                        return "EXIT"
 
 
 class GameOverScreen:
@@ -248,11 +248,59 @@ class VictoryScreen:
             clock.tick(30)
 
 
+class WinScreen:
+    def __init__(self):
+        pygame.font.init()
+        self.screen = pygame.display.set_mode((800, 600))
+        self.background = pygame.image.load("intro_end/background.png")
+        # self.win_image = pygame.image.load("map_assets/chest.png")
+        self.font = pygame.font.Font(None, 74)
+        self.button_font = pygame.font.Font(None, 50)
+        self.clock = pygame.time.Clock()
+
+    def run(self):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if 300 <= mouse_pos[0] <= 500 and 400 <= mouse_pos[1] <= 450:
+                        return "RESTART"
+                    elif 300 <= mouse_pos[0] <= 500 and 500 <= mouse_pos[1] <= 550:
+                        return "EXIT"
+
+            self.screen.blit(self.background, (0, 0))
+            # self.screen.blit(self.win_image, (300, 200))
+
+            win_text = self.font.render("You Win!", True, (255, 215, 0))
+            self.screen.blit(win_text, (300, 100))
+
+            restart_button = pygame.Rect(300, 400, 200, 50)
+            exit_button = pygame.Rect(300, 500, 200, 50)
+
+            pygame.draw.rect(self.screen, (0, 255, 0), restart_button)
+            pygame.draw.rect(self.screen, (255, 0, 0), exit_button)
+
+            restart_text = self.button_font.render("Restart", True, (0, 0, 0))
+            exit_text = self.button_font.render("Exit", True, (0, 0, 0))
+
+            self.screen.blit(restart_text, (350, 410))
+            self.screen.blit(exit_text, (370, 510))
+
+            pygame.display.flip()
+            self.clock.tick(60)
+
+
 if __name__ == "__main__":
     # intro = IntroScreen()
     # intro.run()
-    story = StoryScreen()
-    story.run()
+    win = WinScreen()
+    win.run()
+    # story = StoryScreen()
+    # story.run()
     # game_over_screen = GameOverScreen()
     # game_over_screen.run()
 
