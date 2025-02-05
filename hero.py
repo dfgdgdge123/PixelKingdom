@@ -7,6 +7,7 @@ class Hero:
         self.image = self.stand_sprite
         self.rect = self.image.get_rect()
         self.attack_area = pygame.Rect(*self.rect.topleft, self.rect.h * 2, self.rect.h * 2)
+        self.rect_for_anim = self.rect
 
         self.frame = 0
         self.is_r_attacking = False  # Флаг атаки
@@ -79,10 +80,9 @@ class Hero:
             self.is_l_attacking = True
             self.frame = 0
 
-
     def animate(self):
         """Анимация персонажа с обновлением размеров хитбокса."""
-        previous_center = self.rect.center  # Сохраняем центр перед сменой анимации
+        previous_center = self.rect_for_anim.center  # Сохраняем центр перед сменой анимации
 
         if self.is_r_attacking:
             if self.frame < len(self.anim_r_attack) - 1:
@@ -114,5 +114,5 @@ class Hero:
             self.image = self.stand_sprite  # Если не двигается — стоит на месте
 
         # Обновляем `rect`, чтобы он соответствовал новому размеру `image`
-        self.rect = self.image.get_rect()
-        self.rect.center = previous_center  # Сохраняем центр, чтобы спрайт не дёргался
+        self.rect_for_anim = self.image.get_rect()
+        self.rect_for_anim.center = previous_center  # Сохраняем центр, чтобы спрайт не дёргался

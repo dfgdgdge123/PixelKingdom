@@ -252,11 +252,13 @@ class Game:
                 bonus_surface, bonus_rect = self.apply_camera(bonus.image, bonus.rect)
                 self.screen.blit(bonus_surface, bonus_rect)
 
-            hero_surface, hero_rect = self.apply_camera(self.hero.image, self.hero.rect)
+            hero_surface, hero_rect = self.apply_camera(self.hero.image, self.hero.rect_for_anim)
             self.screen.blit(hero_surface, hero_rect)
 
             self.draw_health_bar()
             self.check_effects()
+            self.hero.attack_area.center = self.hero.rect.center
+            self.hero.rect_for_anim.center = self.hero.rect.center
 
             pygame.display.flip()
             self.clock.tick(60)
