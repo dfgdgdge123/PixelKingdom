@@ -79,6 +79,7 @@ class Hero:
             self.is_l_attacking = True
             self.frame = 0
 
+
     def animate(self):
         """Анимация персонажа с обновлением размеров хитбокса."""
         previous_center = self.rect.center  # Сохраняем центр перед сменой анимации
