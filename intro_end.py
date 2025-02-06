@@ -199,59 +199,6 @@ class StoryScreen:
             pygame.display.flip()
             self.clock.tick(60)
 
-#
-# class VictoryScreen:
-#     def __init__(self, screen):
-#         self.screen = screen
-#         self.font = pygame.font.Font(None, 74)
-#         self.small_font = pygame.font.Font(None, 50)
-#         self.chest_closed = pygame.image.load("chest_closed.png")
-#         self.chest_open = pygame.image.load("chest_open.png")
-#         self.chest_rect = self.chest_closed.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-#         self.show_open_chest = False
-#
-#     def run(self):
-#         clock = pygame.time.Clock()
-#         running = True
-#         while running:
-#             self.screen.fill((0, 0, 0))
-#             title_text = self.font.render("Вы выиграли!", True, (255, 215, 0))
-#             self.screen.blit(title_text, (self.screen.get_width() // 2 - title_text.get_width() // 2, 100))
-#
-#             if self.show_open_chest:
-#                 self.screen.blit(self.chest_open, self.chest_rect)
-#             else:
-#                 self.screen.blit(self.chest_closed, self.chest_rect)
-#                 pygame.time.delay(1000)  # Задержка перед анимацией сундука
-#                 self.show_open_chest = True
-#
-#             play_again_text = self.small_font.render("Играть снова", True, (255, 255, 255))
-#             exit_text = self.small_font.render("Выйти", True, (255, 255, 255))
-#             play_again_rect = play_again_text.get_rect(center=(self.screen.get_width() // 2, 400))
-#             exit_rect = exit_text.get_rect(center=(self.screen.get_width() // 2, 470))
-#             next_lvl_text = self.small_font.render("След уровень", True, (255, 255, 255))
-#             next_lvl_rect = play_again_text.get_rect(center=(self.screen.get_width() // 2, 330))
-#
-#             self.screen.blit(play_again_text, play_again_rect.topleft)
-#             self.screen.blit(exit_text, exit_rect.topleft)
-#             self.screen.blit(next_lvl_text, next_lvl_rect.topleft)
-#
-#             pygame.display.flip()
-#
-#             for event in pygame.event.get():
-#                 if event.type == pygame.QUIT:
-#                     pygame.quit()
-#                     sys.exit()
-#                 elif event.type == pygame.MOUSEBUTTONDOWN:
-#                     if play_again_rect.collidepoint(event.pos):
-#                         return "RESTART"
-#                     elif exit_rect.collidepoint(event.pos):
-#                         return "EXIT"
-#                     elif next_lvl_rect.collidepoint(event.pos):
-#                         return "NEXT"
-#
-#             clock.tick(30)
-
 
 class WinScreen:
     def __init__(self):

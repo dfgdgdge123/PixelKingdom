@@ -383,7 +383,7 @@ class Game:
 
 if __name__ == "__main__":
     while True:
-        game = Game()
+        game = Game(level=1)  # Запуск первого уровня
         game.run()
 
         intro = IntroScreen()
@@ -391,7 +391,7 @@ if __name__ == "__main__":
 
         if choice == "PLAY":
             while True:
-                game = Game()
+                game = Game(level=1)  # Запуск первого уровня
                 game.run()
 
                 game_over_screen = GameOverScreen()
