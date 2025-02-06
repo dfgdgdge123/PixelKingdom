@@ -18,7 +18,7 @@ class MapLoader:
             return {
                 "L": pygame.image.load("map_assets/land.jpg"),
                 "G": pygame.image.load("map_assets/grass.jpg"),
-                "F": pygame.image.load("map_assets/fild.jpg"),
+                # "F": pygame.image.load("map_assets/fild.jpg"),
                 "C": pygame.image.load("map_assets/castle_floor.jpg"),
                 "S": pygame.image.load("map_assets/castle_walls.jpg"),
                 "1": pygame.image.load("map_assets/three1.jpg"),
@@ -29,16 +29,16 @@ class MapLoader:
             }
         elif level == 2:
             return {
-                "L": pygame.image.load("map_assets/fild.jpg"),
-                "G": pygame.image.load("map_assets/fild.jpg"),
-                "F": pygame.image.load("map_assets/fild.jpg"),
+                "L": pygame.image.load("map_assets/land_2level.jpg"),
+                "G": pygame.image.load("map_assets/grass_level2.jpg"),
+                # "F": pygame.image.load("map_assets/fild.jpg"),
                 "C": pygame.image.load("map_assets/castle_floor.jpg"),
                 "S": pygame.image.load("map_assets/castle_walls.jpg"),
-                "1": pygame.image.load("map_assets/three1.jpg"),
-                "2": pygame.image.load("map_assets/three2.jpg"),
-                "3": pygame.image.load("map_assets/three3.jpg"),
-                "4": pygame.image.load("map_assets/three3.jpg"),
-                "5": pygame.image.load("map_assets/three5.jpg"),
+                # "1": pygame.image.load("map_assets/three1.jpg"),
+                # "2": pygame.image.load("map_assets/three2.jpg"),
+                # "3": pygame.image.load("map_assets/three3.jpg"),
+                # "4": pygame.image.load("map_assets/three3.jpg"),
+                # "5": pygame.image.load("map_assets/three5.jpg"),
             }
 
     def draw_map(self, screen, camera_x, camera_y, camera_zoom):
