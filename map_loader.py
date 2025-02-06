@@ -29,9 +29,9 @@ class MapLoader:
             }
         elif level == 2:
             return {
-                "L": pygame.image.load("map_assets/new_fild.jpg"),
-                "G": pygame.image.load("map_assets/new_fild.jpg"),
-                "F": pygame.image.load("map_assets/new_fild.jpg"),
+                "L": pygame.image.load("map_assets/fild.jpg"),
+                "G": pygame.image.load("map_assets/fild.jpg"),
+                "F": pygame.image.load("map_assets/fild.jpg"),
                 "C": pygame.image.load("map_assets/castle_floor.jpg"),
                 "S": pygame.image.load("map_assets/castle_walls.jpg"),
                 "1": pygame.image.load("map_assets/three1.jpg"),
