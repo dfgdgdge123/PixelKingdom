@@ -3,7 +3,7 @@ import random
 import pygame
 import sys
 import sqlite3
-from intro_end import IntroScreen, GameOverScreen, StoryScreen, WinScreen
+from intro_end import IntroScreen, GameOverScreen, StatsScreen, WinScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
 from map_loader import MapLoader
@@ -31,15 +31,25 @@ class Game:
         self.damage_taken = 0
 
         self.castle = pygame.image.load('map_assets/castle.png')
+        self.background_color = (124, 172, 46) if level == 1 else (244, 225, 173)
         self.hero = Hero()
         self.clock = pygame.time.Clock()
         self.init_hero_position()
 
+        self.sceleton_hp = 5
+        self.eye_hp = 3
+        self.goblin_hp = 2
+        self.mushroom_hp = 4
+        if level == 2:  # увеличение хп монстров на 2-м уровне
+            self.sceleton_hp = self.sceleton_hp * 1.5
+            self.eye_hp = self.eye_hp * 1.5
+            self.goblin_hp = self.goblin_hp * 1.5
+            self.mushroom_hp = self.mushroom_hp * 1.5
         self.monster_hits = {
-            Sceleton: {"hits_to_kill": 5, "hit_count": {}},
-            Eye: {"hits_to_kill": 3, "hit_count": {}},
-            Goblin: {"hits_to_kill": 2, "hit_count": {}},
-            Mushroom: {"hits_to_kill": 4, "hit_count": {}},
+            Sceleton: {"hits_to_kill": self.sceleton_hp, "hit_count": {}},
+            Eye: {"hits_to_kill": self.eye_hp, "hit_count": {}},
+            Goblin: {"hits_to_kill": self.goblin_hp, "hit_count": {}},
+            Mushroom: {"hits_to_kill": self.mushroom_hp, "hit_count": {}},
         }
 
         self.last_hit_time = 0
@@ -257,7 +267,7 @@ class Game:
     def win_game(self):
         """Анимация приближения, ожидание клика по сундуку, затем запуск экрана победы."""
         self.animate_camera_to_castle()
-        self.save_results()
+        self.save_results(self.level)
 
         self.chest_opened = False
         self.chest_image = self.chest_closed_image
@@ -293,10 +303,10 @@ class Game:
                         pygame.time.delay(5000)
 
                         win_screen = WinScreen()
-                        choice, level = win_screen.run()
+                        choice, level = win_screen.run(self.level)
 
                         if choice == "RESTART":
-                            game = Game(level=level)
+                            game = Game(level=1)
                             game.run()
                         elif choice == "NEXT":
                             game = Game(level=2)
@@ -305,7 +315,7 @@ class Game:
                             pygame.quit()
                             sys.exit()
 
-    def save_results(self):
+    def save_results(self, level):
         """Сохраняет результаты игры в базу данных."""
         total_time = pygame.time.get_ticks() - self.start_time
         con = sqlite3.connect("results.db")
@@ -314,11 +324,13 @@ class Game:
         games, kills, wins, defeats, time_in_game, deaths, castle_destructions, levels_passed = result[0]
         levels_passed += 1
         kills += self.monsters_killed
+        if level == 2:
+            wins += 1
         time_in_game += total_time // 1000  # время, проведенное в игре в секундах
         cur.execute(
             '''UPDATE results SET games = ?, kills = ?, time_in_game = ?,
-             levels_passed = ?''',
-            (games, kills, time_in_game, levels_passed))
+             levels_passed = ?, wins = ?''',
+            (games, kills, time_in_game, levels_passed, wins))
         con.commit()
         con.close()
 
@@ -370,11 +382,12 @@ class Game:
                     self.save_results_after_exit()
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3 and not self.hero.is_r_attacking:
-                    self.hero.attack_r()
-                    self.check_attack_collision()
-                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not self.hero.is_l_attacking:
-                    self.hero.attack_l()
+                elif event.type == pygame.MOUSEBUTTONDOWN and (event.button == 3 or event.button == 1) and not (
+                        self.hero.is_r_attacking or self.hero.is_l_attacking):
+                    if self.hero.last_horizontal_direction == 'right':
+                        self.hero.attack_r()
+                    elif self.hero.last_horizontal_direction == 'left':
+                        self.hero.attack_l()
                     self.check_attack_collision()
 
             keys = pygame.key.get_pressed()
@@ -400,7 +413,7 @@ class Game:
             if self.monsters_killed >= 15 and self.hero.lives > 0:
                 self.win_game()
 
-            self.screen.fill((124, 172, 46))
+            self.screen.fill(self.background_color)
 
             self.update_camera()
 
@@ -433,8 +446,6 @@ class Game:
 
 if __name__ == "__main__":
     while True:
-        game = Game(level=1)  # Запуск первого уровня
-        game.run()
 
         intro = IntroScreen()
         choice = intro.run()
@@ -445,14 +456,14 @@ if __name__ == "__main__":
                 game.run()
 
                 game_over_screen = GameOverScreen()
-                choice = game_over_screen.run()
+                choice = game_over_screen.run(game.level)
 
                 if choice == "NO":
                     break
 
-        elif choice == "STORY":
-            story_screen = StoryScreen()
-            story_screen.run()
+        elif choice == "STATS":
+            stats_screen = StatsScreen()
+            stats_screen.run()
 
         elif choice == "EXIT":
             pygame.quit()

@@ -3,8 +3,9 @@ import pygame
 
 class Hero:
     def __init__(self):
-        self.stand_sprite = pygame.image.load("hero_assets/hero.png").subsurface(40, 40, 25, 40)
-        self.image = self.stand_sprite
+        self.stand_sprite_r = pygame.image.load("hero_assets/hero_r.png").subsurface(40, 40, 25, 40)
+        self.stand_sprite_l = pygame.image.load("hero_assets/hero_l.png").subsurface(52, 40, 25, 40)
+        self.image = self.stand_sprite_r
         self.rect = self.image.get_rect()
         self.attack_area = pygame.Rect(*self.rect.topleft, self.rect.h * 2, self.rect.h * 2)
         self.rect_for_anim = self.rect
@@ -13,6 +14,7 @@ class Hero:
         self.is_r_attacking = False  # Флаг атаки
         self.is_l_attacking = False
         self.moving_direction = None  # Направление движения
+        self.last_horizontal_direction = 'right'
         self.load_animations()
 
         self.bonuses = []
@@ -30,7 +32,7 @@ class Hero:
         img_l_attack = pygame.image.load("hero_assets/inv_Attack.png")
 
         self.anim_run_d = [img_run_d.subsurface(x, 42, 28, 38) for x in range(42, 1124, 120)]
-        self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(42, 1124, 120))]
+        self.anim_run_a = [img_run_a.subsurface(x, 42, 28, 38) for x in reversed(range(50, 1124, 120))]
         self.anim_run_ws = [img_run_ws.subsurface(x, 46, 31, 33) for x in range(42, 282, 120)]
 
         self.anim_r_attack = [img_attack.subsurface(36, 43, 40, 37),
@@ -53,9 +55,11 @@ class Hero:
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             new_x -= self.speed
             self.moving_direction = "left"
+            self.last_horizontal_direction = 'left'
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             new_x += self.speed
             self.moving_direction = "right"
+            self.last_horizontal_direction = 'right'
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             new_y += self.speed
             self.moving_direction = "down"
@@ -111,7 +115,10 @@ class Hero:
             self.image = self.anim_run_ws[int(self.frame)]
 
         else:
-            self.image = self.stand_sprite  # Если не двигается — стоит на месте
+            if self.last_horizontal_direction == 'left':
+                self.image = self.stand_sprite_l
+            elif self.last_horizontal_direction == 'right':
+                self.image = self.stand_sprite_r  # Если не двигается — стоит на месте
 
         # Обновляем `rect`, чтобы он соответствовал новому размеру `image`
         self.rect_for_anim = self.image.get_rect()

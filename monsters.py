@@ -78,7 +78,7 @@ class Monster(pygame.sprite.Sprite):
                 self.hit_frame = 0
             else:
                 self.image = self.anim_hit[int(self.hit_frame)]
-        elif self.is_attacking:
+        if self.is_attacking:
             self.attack_frame += 0.2
             if self.attack_frame >= len(self.anim_attack):
                 if not self.is_dead and hero.rect.colliderect(self.rect):
@@ -89,7 +89,7 @@ class Monster(pygame.sprite.Sprite):
                 self.attack_frame = 0
             else:
                 self.image = self.anim_attack[int(self.attack_frame)]
-        else:
+        if not (self.is_attacking or self.is_hit or self.is_dead):
             # self.rect.x += self.speed
             self.move()
 

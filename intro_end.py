@@ -1,3 +1,5 @@
+import sqlite3
+
 import pygame
 import sys
 
@@ -54,7 +56,7 @@ class IntroScreen:
             progress += 2
             clock.tick(30)
 
-        menu_button = self.draw_button("STORY", self.WIDTH // 2 - 90, 500, (255, 200, 50))
+        menu_button = self.draw_button("STATS", self.WIDTH // 2 - 90, 500, (255, 200, 50))
         play_button = self.draw_button("PLAY", self.WIDTH // 3 - 90, 500, (240, 80, 80))
         exit_button = self.draw_button("EXIT", self.WIDTH * 2 // 3 - 90, 500, (60, 180, 200))
 
@@ -69,7 +71,7 @@ class IntroScreen:
                     if play_button.collidepoint(event.pos):
                         return "PLAY"
                     elif menu_button.collidepoint(event.pos):
-                        return "STORY"
+                        return "STATS"
                     elif exit_button.collidepoint(event.pos):
                         return "EXIT"
 
@@ -145,7 +147,7 @@ class GameOverScreen:
         pygame.quit()
 
 
-class StoryScreen:
+class StatsScreen:
     def __init__(self):
         pygame.init()  # Инициализация Pygame
         pygame.font.init()  # Инициализация шрифтов
@@ -177,15 +179,27 @@ class StoryScreen:
         return False
 
     def run(self):
+        con = sqlite3.connect("results.db")
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM results""").fetchall()
+        games, kills, wins, defeats, time_in_game, deaths, castle_destructions, levels_passed = result[0]
+        con.close()
         running = True
         while running:
             self.screen.fill((0, 0, 0))  # Черный фон
 
-            # Отрисовка текста описания
-            self.draw_text("Описание игры:", 50, 50)
-            self.draw_text("Здесь будет описание игры.", 50, 100)
-            self.draw_text("Вы можете добавить сюда любой текст,", 50, 150)
-            self.draw_text("который расскажет игроку о сюжете.", 50, 200)
+            # Отрисовка текста статистики
+            self.draw_text("Статистка:", 50, 50)
+            self.draw_text(f"Всего игр сыграно: {games}", 50, 100)
+            self.draw_text(f"Побед: {wins}", 50, 150)
+            self.draw_text(f"Побеждено монстров: {kills}", 50, 200)
+            self.draw_text(f"Поражений: {defeats}", 50, 250)
+            self.draw_text(f"Смертей: {deaths}", 50, 300)
+            self.draw_text(f"Потерь замка: {castle_destructions}", 50, 350)
+            self.draw_text(f"Пройдено уровней: {levels_passed}", 50, 400)
+            self.draw_text(f"Время в игре:"
+                           f" {time_in_game // 60 // 60} ч. {(time_in_game - time_in_game // 3600 * 3600) // 60} м."
+                           f" {time_in_game % 60} с.", 50, 450)
 
             # Кнопка возврата на интро
             if self.draw_button("Вернуться", 350, 500, 100, 50, (100, 100, 100), (150, 150, 150)):
@@ -210,7 +224,7 @@ class WinScreen:
         self.button_font = pygame.font.Font(None, 50)
         self.clock = pygame.time.Clock()
 
-    def run(self):
+    def run(self, level):
         running = True
         while running:
             for event in pygame.event.get():
@@ -238,7 +252,8 @@ class WinScreen:
 
             pygame.draw.rect(self.screen, (0, 255, 0), restart_button)
             pygame.draw.rect(self.screen, (255, 0, 0), exit_button)
-            pygame.draw.rect(self.screen, (0, 0, 255), next_lvl_button)
+            if level == 1:
+                pygame.draw.rect(self.screen, (0, 0, 255), next_lvl_button)
 
             restart_text = self.button_font.render("Restart", True, (0, 0, 0))
             exit_text = self.button_font.render("Exit", True, (0, 0, 0))
@@ -246,7 +261,8 @@ class WinScreen:
 
             self.screen.blit(restart_text, (350, 410))
             self.screen.blit(exit_text, (370, 510))
-            self.screen.blit(next_lvl_text, (330, 310))
+            if level == 1:
+                self.screen.blit(next_lvl_text, (330, 310))
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -256,9 +272,8 @@ if __name__ == "__main__":
     # intro = IntroScreen()
     # intro.run()
     win = WinScreen()
-    win.run()
+    win.run(1)
     # story = StoryScreen()
     # story.run()
     # game_over_screen = GameOverScreen()
     # game_over_screen.run()
-
