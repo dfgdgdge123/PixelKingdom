@@ -13,13 +13,14 @@ CELL_SIZE = 50
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, level=1):
         pygame.init()
-        self.map_loader = MapLoader("map.txt")
+        self.level = level
+        self.map_loader = MapLoader(f"map_level{level}.txt")  # Загружаем карту в зависимости от уровня
         self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Pixel Kingdom")
+        pygame.display.set_caption(f"Pixel Kingdom - Level {level}")
 
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
@@ -49,7 +50,7 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
         self.bonuses = []
-        self.monsters_killed = 0
+        self.monsters_killed = 14
 
         # Камера
         self.camera_x = 0
@@ -280,6 +281,9 @@ class Game:
 
                         if choice == "RESTART":
                             self.__init__()
+                        elif choice == "NEXT":
+                            game = Game(level=2)  # Запускаем второй уровень
+                            game.run()
                         elif choice == "EXIT":
                             pygame.quit()
                             sys.exit()
