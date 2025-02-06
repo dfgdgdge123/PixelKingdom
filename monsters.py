@@ -82,9 +82,9 @@ class Monster(pygame.sprite.Sprite):
             self.attack_frame += 0.2
             if self.attack_frame >= len(self.anim_attack):
                 if not self.is_dead and hero.rect.colliderect(self.rect):
-                    hero.lives -= 0.5
+                    hero.lives -= 1
                     if hero.lives <= 0:
-                        game.game_over("Закончились жизни героя")
+                        game.game_over("death")
                 self.is_attacking = False
                 self.attack_frame = 0
             else:

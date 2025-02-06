@@ -2,6 +2,7 @@ import random
 
 import pygame
 import sys
+import sqlite3
 from intro_end import IntroScreen, GameOverScreen, StoryScreen, WinScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
@@ -25,6 +26,7 @@ class Game:
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
 
         self.start_time = pygame.time.get_ticks()
+        self.is_game_over = False
         self.damage_taken = 0
 
         self.castle = pygame.image.load('map_assets/castle.png')
@@ -47,7 +49,7 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
         self.bonuses = []
-        self.monsters_killed = 14
+        self.monsters_killed = 0
 
         # Камера
         self.camera_x = 0
@@ -124,11 +126,11 @@ class Game:
                 if (1 <= self.monster_hits[monster_type]["hit_count"][monster] <=
                         self.monster_hits[monster_type]["hits_to_kill"]):
                     monster.take_hit()
-                elif self.monster_hits[monster_type]["hit_count"][monster] >= self.monster_hits[monster_type][
-                        "hits_to_kill"]:
+                if (self.monster_hits[monster_type]["hit_count"][monster] >=
+                        self.monster_hits[monster_type]["hits_to_kill"]):
                     self.monsters_killed += 1  # Увеличиваем счётчик убитых монстров
                     monster.die()
-                    self.monsters.remove(monster)  # Удаляем монстра из списка
+                    # self.monsters.remove(monster)  # Удаляем монстра из списка
                     # self.check_victory_conditions()  # Проверяем победу
 
     def check_monster_collision(self):
@@ -139,7 +141,7 @@ class Game:
                     monster.attack()
                     self.last_hit_time = current_time
 
-                    self.damage_taken += 0.5
+                    self.damage_taken += 1
 
     def draw_health_bar(self):
         """Отображает шкалу жизней в правом верхнем углу."""
@@ -176,9 +178,10 @@ class Game:
 
         self.screen.blit(text, (20, 20))
 
-    def game_over(self, reason="Неизвестная причина"):
+    def game_over(self, reason):
         """Запускает экран окончания игры и сохраняет результаты."""
         self.save_game_over_results(reason)
+        self.is_game_over = True
 
         game_over_screen = GameOverScreen()
         choice = game_over_screen.run()
@@ -199,7 +202,7 @@ class Game:
         for _ in range(num_monsters):
             monster_type = random.choices(
                 [Sceleton, Eye, Goblin, Mushroom],
-                weights=[100, 30, 25, 30],  # Вероятность появления разных типов монстров
+                weights=[20, 30, 25, 30],  # Вероятность появления разных типов монстров
                 k=1
             )[0]
 
@@ -251,6 +254,7 @@ class Game:
     def win_game(self):
         """Анимация приближения, ожидание клика по сундуку, затем запуск экрана победы."""
         self.animate_camera_to_castle()
+        self.save_results()
 
         self.chest_opened = False
         self.chest_image = self.chest_closed_image
@@ -280,8 +284,6 @@ class Game:
                         self.chest_image = self.chest_opened_image
                         waiting_for_click = False
 
-                        self.save_results()
-
                         pygame.time.delay(5000)
 
                         win_screen = WinScreen()
@@ -294,28 +296,60 @@ class Game:
                             sys.exit()
 
     def save_results(self):
-        """Сохраняет результаты игры в текстовый файл."""
+        """Сохраняет результаты игры в базу данных."""
         total_time = pygame.time.get_ticks() - self.start_time
-        minutes = total_time // 60000
-        seconds = (total_time % 60000) // 1000
-
-        with open("results.txt", "w") as file:
-            file.write("Вы прошли первый уровень!\n")
-            file.write("\n")
-            file.write(f"Время прохождения: {minutes} минут {seconds} секунд\n")
-            file.write(f"Полученный урон: {self.damage_taken}\n")
+        con = sqlite3.connect("results.db")
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM results""").fetchall()
+        games, kills, wins, defeats, time_in_game, deaths, castle_destructions, levels_passed = result[0]
+        levels_passed += 1
+        kills += self.monsters_killed
+        time_in_game += total_time // 1000  # время, проведенное в игре в секундах
+        cur.execute(
+            '''UPDATE results SET games = ?, kills = ?, time_in_game = ?,
+             levels_passed = ?''',
+            (games, kills, time_in_game, levels_passed))
+        con.commit()
+        con.close()
 
     def save_game_over_results(self, reason):
         """Сохраняет результаты игры при проигрыше."""
         total_time = pygame.time.get_ticks() - self.start_time
-        minutes = total_time // 60000
-        seconds = (total_time % 60000) // 1000
+        con = sqlite3.connect("results.db")
+        cur = con.cursor()
+        result = cur.execute("""SELECT * FROM results""").fetchall()
+        games, kills, wins, defeats, time_in_game, deaths, castle_destructions, levels_passed = result[0]
+        games += 1
+        kills += self.monsters_killed
+        defeats += 1
+        if reason == 'castle_death':
+            castle_destructions += 1
+        elif reason == 'death':
+            deaths += 1
+        time_in_game += total_time // 1000  # время, проведенное в игре в секундах
+        cur.execute(
+            '''UPDATE results SET games = ?, kills = ?, defeats = ?, time_in_game = ?,
+             deaths = ?, castle_destructions = ?''',
+            (games, kills, defeats, time_in_game, deaths, castle_destructions))
+        con.commit()
+        con.close()
 
-        with open("results.txt", "w") as file:
-            file.write("Игра окончена!\n")
-            file.write(f"Причина: {reason}\n")
-            file.write(f"Время игры: {minutes} минут {seconds} секунд\n")
-            file.write(f"Полученный урон: {self.damage_taken}\n")
+    def save_results_after_exit(self):
+        """Сохраняет результаты при выходе из игры."""
+        if not self.is_game_over:
+            total_time = pygame.time.get_ticks() - self.start_time
+            con = sqlite3.connect("results.db")
+            cur = con.cursor()
+            result = cur.execute("""SELECT * FROM results""").fetchall()
+            games, kills, wins, defeats, time_in_game, deaths, castle_destructions, levels_passed = result[0]
+            games += 1
+            kills += self.monsters_killed
+            time_in_game += total_time // 1000  # время, проведенное в игре в секундах
+            cur.execute(
+                '''UPDATE results SET games = ?, kills = ?, time_in_game = ?''',
+                (games, kills, time_in_game))
+            con.commit()
+            con.close()
 
     def run(self):
         while True:
@@ -323,6 +357,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.save_results_after_exit()
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3 and not self.hero.is_r_attacking:
@@ -345,7 +380,7 @@ class Game:
 
                 # Проверяем, достиг ли монстр стены замка
                 if monster.reached_castle:
-                    self.game_over("Монстр достиг замка")
+                    self.game_over("castle_death")
                     return  # Завершаем игру
 
             self.check_monster_collision()
@@ -356,7 +391,7 @@ class Game:
                 self.win_game()
 
             self.screen.fill((124, 172, 46))
-            self.screen.blit(self.map_loader.background, (0, 0))
+            # self.screen.blit(self.map_loader.background, (0, 0))
 
             self.update_camera()
 
