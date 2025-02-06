@@ -2,7 +2,7 @@ import random
 
 import pygame
 import sys
-from intro_end import IntroScreen, GameOverScreen, StoryScreen
+from intro_end import IntroScreen, GameOverScreen, StoryScreen, WinScreen
 from monsters import Sceleton, Eye, Goblin, Mushroom
 from hero import Hero
 from map_loader import MapLoader
@@ -112,10 +112,9 @@ class Game:
 
     def check_attack_collision(self):
         """Обрабатывает атаку героя и убийство монстров."""
-        for monster in self.monsters[:]:  # Копируем список, чтобы безопасно удалять элементы
         pygame.time.get_ticks()
         self.hero.attack_area.center = self.hero.rect.center
-        for monster in self.monsters:
+        for monster in self.monsters[:]:  # Копируем список, чтобы безопасно удалять элементы
             monster_type = type(monster)
             if not monster.is_dead and self.hero.attack_area.colliderect(monster.rect):
                 if monster not in self.monster_hits[monster_type]["hit_count"]:
@@ -126,7 +125,7 @@ class Game:
                         self.monster_hits[monster_type]["hits_to_kill"]):
                     monster.take_hit()
                 elif self.monster_hits[monster_type]["hit_count"][monster] >= self.monster_hits[monster_type][
-                    "hits_to_kill"]:
+                        "hits_to_kill"]:
                     self.monsters_killed += 1  # Увеличиваем счётчик убитых монстров
                     monster.die()
                     self.monsters.remove(monster)  # Удаляем монстра из списка
@@ -348,9 +347,6 @@ class Game:
                 if monster.reached_castle:
                     self.game_over("Монстр достиг замка")
                     return  # Завершаем игру
-
-            if self.lives <= 0:
-                self.game_over("Закончились жизни героя")
 
             self.check_monster_collision()
             self.check_bonus_collision()

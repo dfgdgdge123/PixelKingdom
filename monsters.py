@@ -4,6 +4,7 @@ from bonuses import Bonus
 
 CELL_SIZE = 50
 
+
 class Monster(pygame.sprite.Sprite):
     def __init__(self, image_path, x, y, speed, map_loader, anim_run, anim_death, anim_hit, anim_attack, game):
         super().__init__()
@@ -83,7 +84,7 @@ class Monster(pygame.sprite.Sprite):
                 if not self.is_dead and hero.rect.colliderect(self.rect):
                     hero.lives -= 0.5
                     if hero.lives <= 0:
-                        game.game_over()
+                        game.game_over("Закончились жизни героя")
                 self.is_attacking = False
                 self.attack_frame = 0
             else:

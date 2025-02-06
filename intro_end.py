@@ -269,7 +269,7 @@ class WinScreen:
                     mouse_pos = pygame.mouse.get_pos()
                     if 300 <= mouse_pos[0] <= 500 and 400 <= mouse_pos[1] <= 450:
                         return "RESTART"
-                    elif 300 <= mouse_pos[0] <= 500 and 500 <= mouse_pos[1] <= 550:
+                    elif 300 <= mouse_pos[0] <= 500 <= mouse_pos[1] <= 550:
                         return "EXIT"
                     elif 300 <= mouse_pos[0] <= 500 and 600 <= mouse_pos[1] <= 650:
                         return "NEXT_LEVEL"  # Новая кнопка для перехода на следующий уровень
@@ -309,4 +309,3 @@ if __name__ == "__main__":
     # story.run()
     # game_over_screen = GameOverScreen()
     # game_over_screen.run()
-
