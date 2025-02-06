@@ -16,7 +16,7 @@ class Game:
     def __init__(self, level=1):
         pygame.init()
         self.level = level
-        self.map_loader = MapLoader(f"map_level{level}.txt")  # Загружаем карту в зависимости от уровня
+        self.map_loader = MapLoader(f"map_level{level}.txt", self.level)  # Загружаем карту в зависимости от уровня
         self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -25,7 +25,7 @@ class Game:
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
 
-        self.lives = 5  # Количество жизней героя
+        self.lives = 10  # Количество жизней героя
 
         self.start_time = pygame.time.get_ticks()
         self.damage_taken = 0
@@ -135,7 +135,7 @@ class Game:
 
     def draw_health_bar(self):
         """Отображает шкалу жизней в правом верхнем углу."""
-        bar_width = 250
+        bar_width = 510
         bar_height = 40
         bar_x = self.screen_width - bar_width - 20
         bar_y = 20
@@ -191,7 +191,7 @@ class Game:
         for _ in range(num_monsters):
             monster_type = random.choices(
                 [Sceleton, Eye, Goblin, Mushroom],
-                weights=[100, 30, 25, 30],  # Вероятность появления разных типов монстров
+                weights=[20, 30, 25, 30],  # Вероятность появления разных типов монстров
                 k=1
             )[0]
 
@@ -274,6 +274,9 @@ class Game:
 
                         self.save_results()
 
+                        chest_surface, chest_rect = self.apply_camera(self.chest_image, self.chest_rect)
+                        self.screen.blit(chest_surface, chest_rect)
+                        pygame.display.flip()
                         pygame.time.delay(5000)
 
                         win_screen = WinScreen()
@@ -294,11 +297,11 @@ class Game:
         minutes = total_time // 60000
         seconds = (total_time % 60000) // 1000
 
-        with open("results.txt", "w") as file:
-            file.write("Вы прошли первый уровень!\n")
-            file.write("\n")
+        with open("results.txt", "a") as file:
+            file.write(f"\nВы прошли уровень {self.level}!\n")
             file.write(f"Время прохождения: {minutes} минут {seconds} секунд\n")
             file.write(f"Полученный урон: {self.damage_taken}\n")
+            file.write("-" * 40 + "\n")
 
     def save_game_over_results(self, reason):
         """Сохраняет результаты игры при проигрыше."""
@@ -306,11 +309,12 @@ class Game:
         minutes = total_time // 60000
         seconds = (total_time % 60000) // 1000
 
-        with open("results.txt", "w") as file:
-            file.write("Игра окончена!\n")
-            file.write(f"\nПричина: {reason}\n")
+        with open("results.txt", "a") as file:
+            file.write(f"\nИгра окончена на уровне {self.level}!\n")
+            file.write(f"Причина: {reason}\n")
             file.write(f"Время игры: {minutes} минут {seconds} секунд\n")
             file.write(f"Полученный урон: {self.damage_taken}\n")
+            file.write("-" * 40 + "\n")
 
     def run(self):
         while True:
@@ -383,8 +387,8 @@ class Game:
 
 if __name__ == "__main__":
     while True:
-        game = Game(level=1)  # Запуск первого уровня
-        game.run()
+        # game = Game(level=1)  # Запуск первого уровня
+        # game.run()
 
         intro = IntroScreen()
         choice = intro.run()
