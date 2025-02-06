@@ -14,13 +14,14 @@ CELL_SIZE = 50
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, level=1):
         pygame.init()
-        self.map_loader = MapLoader("map.txt")
+        self.level = level
+        self.map_loader = MapLoader(f"map_level{level}.txt", self.level)  # Загружаем карту в зависимости от уровня
         self.screen_width = len(self.map_loader.map_data[0]) * CELL_SIZE
         self.screen_height = len(self.map_loader.map_data) * CELL_SIZE
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-        pygame.display.set_caption("Pixel Kingdom")
+        pygame.display.set_caption(f"Pixel Kingdom - Level {level}")
 
         self.heart_image = pygame.image.load("hero_assets/heart.png")
         self.heart_image = pygame.transform.scale(self.heart_image, (30, 30))
@@ -184,13 +185,15 @@ class Game:
         self.is_game_over = True
 
         game_over_screen = GameOverScreen()
-        choice = game_over_screen.run()
+        choice, level = game_over_screen.run(self.level)  # Передаем текущий уровень в GameOverScreen
 
         if choice == "NO":
             pygame.quit()
             sys.exit()
         else:
-            self.__init__()
+            # Перезапускаем игру с текущим уровнем
+            game = Game(level=level)
+            game.run()
 
     def spawn_monster(self):
         """Спавнит 2-3 монстра сразу, с одинаковым X, но разным Y"""
@@ -284,13 +287,20 @@ class Game:
                         self.chest_image = self.chest_opened_image
                         waiting_for_click = False
 
+                        chest_surface, chest_rect = self.apply_camera(self.chest_image, self.chest_rect)
+                        self.screen.blit(chest_surface, chest_rect)
+                        pygame.display.flip()
                         pygame.time.delay(5000)
 
                         win_screen = WinScreen()
-                        choice = win_screen.run()
+                        choice, level = win_screen.run()
 
                         if choice == "RESTART":
-                            self.__init__()
+                            game = Game(level=level)
+                            game.run()
+                        elif choice == "NEXT":
+                            game = Game(level=2)
+                            game.run()
                         elif choice == "EXIT":
                             pygame.quit()
                             sys.exit()
@@ -391,7 +401,6 @@ class Game:
                 self.win_game()
 
             self.screen.fill((124, 172, 46))
-            # self.screen.blit(self.map_loader.background, (0, 0))
 
             self.update_camera()
 
@@ -424,7 +433,7 @@ class Game:
 
 if __name__ == "__main__":
     while True:
-        game = Game()
+        game = Game(level=1)  # Запуск первого уровня
         game.run()
 
         intro = IntroScreen()
@@ -432,7 +441,7 @@ if __name__ == "__main__":
 
         if choice == "PLAY":
             while True:
-                game = Game()
+                game = Game(level=1)  # Запуск первого уровня
                 game.run()
 
                 game_over_screen = GameOverScreen()
