@@ -7,5 +7,5 @@ res = cur.execute('''UPDATE results SET games = 0, kills = 0, wins = 0, defeats 
 castle_destructions = 0, levels_passed = 0''')
 con.commit()
 
-
 con.close()
+#  вспомогательная программа для очистки бд перед сдачей проекта
