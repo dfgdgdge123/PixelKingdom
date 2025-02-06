@@ -17,7 +17,7 @@ class Bonus(pygame.sprite.Sprite):
         if self.effect == "speed":
             hero.speed = 4
             hero.speed_effect_time = pygame.time.get_ticks()
-        elif self.effect == "health" and hero.lives < 10:  # Добавляем жизнь
+        elif self.effect == "health" and hero.lives < 5:  # Добавляем жизнь  # Добавляем жизнь
             if hero.lives == 4.5:
                 hero.lives = 5
             else:

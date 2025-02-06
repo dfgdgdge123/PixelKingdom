@@ -49,7 +49,7 @@ class Game:
         self.last_spawn = pygame.time.get_ticks()
 
         self.bonuses = []
-        self.monsters_killed = 14
+        self.monsters_killed = 0
 
         # Камера
         self.camera_x = 0
@@ -304,7 +304,7 @@ class Game:
 
         with open("results.txt", "w") as file:
             file.write("Игра окончена!\n")
-            file.write(f"Причина: {reason}\n")
+            file.write(f"\nПричина: {reason}\n")
             file.write(f"Время игры: {minutes} минут {seconds} секунд\n")
             file.write(f"Полученный урон: {self.damage_taken}\n")
 
