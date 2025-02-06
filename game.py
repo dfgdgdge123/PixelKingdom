@@ -173,13 +173,15 @@ class Game:
         self.save_game_over_results(reason)
 
         game_over_screen = GameOverScreen()
-        choice = game_over_screen.run()
+        choice, level = game_over_screen.run(self.level)  # Передаем текущий уровень в GameOverScreen
 
         if choice == "NO":
             pygame.quit()
             sys.exit()
         else:
-            self.__init__()
+            # Перезапускаем игру с текущим уровнем
+            game = Game(level=level)
+            game.run()
 
     def spawn_monster(self):
         """Спавнит 2-3 монстра сразу, с одинаковым X, но разным Y"""
@@ -280,12 +282,13 @@ class Game:
                         pygame.time.delay(5000)
 
                         win_screen = WinScreen()
-                        choice = win_screen.run()
+                        choice, level = win_screen.run()
 
                         if choice == "RESTART":
-                            self.__init__()
+                            game = Game(level=level)
+                            game.run()
                         elif choice == "NEXT":
-                            game = Game(level=2)  # Запускаем второй уровень
+                            game = Game(level=2)
                             game.run()
                         elif choice == "EXIT":
                             pygame.quit()

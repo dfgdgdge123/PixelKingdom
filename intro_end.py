@@ -124,23 +124,23 @@ class GameOverScreen:
 
         pygame.display.flip()
 
-    def run(self):
+    def run(self, level):
         running = True
         while running:
             self.draw()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    return "NO"
+                    return "NO", None
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     for button in self.buttons:
                         if button["rect"].collidepoint(event.pos):
                             if button["text"] == "YES":
                                 print("Начинаем игру заново!")
-                                return "YES"
+                                return "YES", level
                             elif button["text"] == "NO":
                                 print("Игра завершена.")
-                                return "NO"
+                                return "NO", None
             pygame.time.delay(100)
         pygame.quit()
 
@@ -220,11 +220,11 @@ class WinScreen:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
                     if 300 <= mouse_pos[0] <= 500 and 400 <= mouse_pos[1] <= 450:
-                        return "RESTART"
+                        return "RESTART", 2
                     elif 300 <= mouse_pos[0] <= 500 and 500 <= mouse_pos[1] <= 550:
-                        return "EXIT"
+                        return "EXIT", None
                     elif 300 <= mouse_pos[0] <= 500 and 300 <= mouse_pos[1] <= 350:
-                        return "NEXT"
+                        return "NEXT", None
 
             self.screen.blit(self.background, (0, 0))
             # self.screen.blit(self.win_image, (300, 200))
